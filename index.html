@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Risk Simulator</title>
+    <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <h2>Settings</h2>
+            <div class="sidebar-section" id="sidebar-general">
+                <h3>General</h3>
+                <label for="interest-rate">Interest Rate (%)</label>
+                <input type="number" id="interest-rate" step="0.01" required>
+                <label for="loan-term">Loan Term (years)</label>
+                <input type="number" id="loan-term" required>
+            </div>
+                        <div class="sidebar-section" id="sidebar-strategy">
+                                <h3>Strategy</h3>
+                                <label for="investment-strategy">Investment Strategy</label>
+                                <select id="investment-strategy"></select>
+                                                                <button id="add-strategy" type="button" class="sidebar-btn" style="background:#27ae60;margin-top:6px;">Add Strategy</button>
+                                                                <button id="edit-strategy" type="button" class="sidebar-btn" style="margin-top:6px;">Edit</button>
+                                                                <button id="delete-strategy" type="button" class="sidebar-btn" style="background:#c0392b;margin-top:6px;">Delete</button>
+                                                                <!-- Modal for strategy name input -->
+                                                                                                                                <!-- Create Modal: Only Name -->
+                                                                                                                                <div id="strategy-modal" style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
+                                                                                                                                    <div style="background:#232836;padding:32px 24px 24px 24px;border-radius:8px;box-shadow:0 2px 16px #000;width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:stretch;">
+                                                                                                                                        <h3 style="color:#fff;margin-top:0;">New Strategy</h3>
+                                                                                                                                        <label for="modal-strategy-name" style="color:#b0b8d1;">Strategy Name</label>
+                                                                                                                                        <input type="text" id="modal-strategy-name" style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+                                                                                                                                        <button id="modal-save-strategy" class="sidebar-btn" style="margin-bottom:8px;">Save</button>
+                                                                                                                                        <button id="modal-cancel-strategy" class="sidebar-btn" style="background:#444a5a;">Cancel</button>
+                                                                                                                                    </div>
+                                                                                                                                </div>
+                                                                                                                                <!-- Edit Modal: All Fields -->
+                                                                                                                                <div id="strategy-edit-modal" style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
+                                                                                                                                    <div style="background:#232836;padding:32px 24px 24px 24px;border-radius:8px;box-shadow:0 2px 16px #000;width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:stretch;">
+                                                                                                                                        <h3 style="color:#fff;margin-top:0;">Edit Strategy</h3>
+                                                                                                                                        <label for="edit-strategy-name" style="color:#b0b8d1;">Strategy Name</label>
+                                                                                                                                        <input type="text" id="edit-strategy-name" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+                                                                                                                                        <label for="edit-strategy-reserve" style="color:#b0b8d1;">% Reserve Capital to Hold</label>
+                                                                                                                                        <input type="number" id="edit-strategy-reserve" min="0" max="100" step="0.01" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;" placeholder="e.g. 10">
+                                                                                                                                        <label for="edit-strategy-reserve-rate" style="color:#b0b8d1;">Reserve Interest Rate (%)</label>
+                                                                                                                                        <input type="number" id="edit-strategy-reserve-rate" step="0.01" style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;" placeholder="e.g. 2">
+                                                                                                                                        <button id="edit-modal-save-strategy" class="sidebar-btn" style="margin-bottom:8px;">Save</button>
+                                                                                                                                        <button id="edit-modal-cancel-strategy" class="sidebar-btn" style="background:#444a5a;">Cancel</button>
+                                                                                                                                    </div>
+                                                                                                                                </div>
+                        </div>
+            <div class="sidebar-section" id="sidebar-scenarios">
+                <h3>Scenarios</h3>
+                <button id="run-simulation" class="sidebar-btn">Run Simulation</button>
+            </div>
+        </aside>
+        <main class="main-area">
+            <header>
+                <h1>Credit Risk Simulator Dashboard</h1>
+            </header>
+            <section id="dashboard">
+                <div id="dashboard-simulation-results" class="results"></div>
+                <canvas id="dashboard-results-chart" height="100"></canvas>
+            </section>
+            <footer>
+                <p>&copy; 2025 Credit Risk Simulator</p>
+            </footer>
+        </main>
+    </div>
+        <script src="assets/js/vendor/chart.js"></script>
+        <script src="assets/js/app.js"></script>
+        <script>
+        // Dashboard operational logic for sidebar layout
+                import('./assets/js/models/loan.js').then(({ default: Loan }) => {
+                    import('./assets/js/models/investment.js').then(({ default: Investment }) => {
+                        // Caching logic
+                        const cacheKeys = {
+                            amount: 'creditsimulator_loan_amount',
+                            interest: 'creditsimulator_interest_rate',
+                            term: 'creditsimulator_loan_term',
+                            strategy: 'creditsimulator_investment_strategy'
+                        };
+                        // Restore cached values
+                        if (localStorage.getItem(cacheKeys.amount)) {
+                            const el = document.getElementById('loan-amount');
+                            if (el) el.value = localStorage.getItem(cacheKeys.amount);
+                        }
+                        if (localStorage.getItem(cacheKeys.interest)) {
+                            document.getElementById('interest-rate').value = localStorage.getItem(cacheKeys.interest);
+                        }
+                        if (localStorage.getItem(cacheKeys.term)) {
+                            document.getElementById('loan-term').value = localStorage.getItem(cacheKeys.term);
+                        }
+                        // --- STRATEGY MANAGEMENT ---
+                        const STRATEGY_KEY = 'dashboard_strategies';
+                        const strategySelect = document.getElementById('investment-strategy');
+                        const addBtn = document.getElementById('add-strategy');
+                        const modal = document.getElementById('strategy-modal');
+                        const modalNameInput = document.getElementById('modal-strategy-name');
+                        const modalSave = document.getElementById('modal-save-strategy');
+                        const modalCancel = document.getElementById('modal-cancel-strategy');
+                        const editBtn = document.getElementById('edit-strategy');
+                        const deleteBtn = document.getElementById('delete-strategy');
+                        // Create modal
+                        const modalReserveInput = null;
+                        const modalReserveRateInput = null;
+                        // Edit modal
+                        const editModal = document.getElementById('strategy-edit-modal');
+                        const editModalName = document.getElementById('edit-strategy-name');
+                        const editModalReserve = document.getElementById('edit-strategy-reserve');
+                        const editModalReserveRate = document.getElementById('edit-strategy-reserve-rate');
+                        const editModalSave = document.getElementById('edit-modal-save-strategy');
+                        const editModalCancel = document.getElementById('edit-modal-cancel-strategy');
+                        let editingStrategy = null;
+
+                        function getStrategies() {
+                            const raw = localStorage.getItem(STRATEGY_KEY);
+                            if (!raw) return [
+                                {name:'Conservative', growth:3, reserve:10, reserveRate:2},
+                                {name:'Moderate', growth:6, reserve:5, reserveRate:1},
+                                {name:'Aggressive', growth:10, reserve:0, reserveRate:0}
+                            ];
+                            try { return JSON.parse(raw); } catch { return []; }
+                        }
+                        function saveStrategies(strats) {
+                            localStorage.setItem(STRATEGY_KEY, JSON.stringify(strats));
+                        }
+                        function refreshStrategyDropdown(selectedName) {
+                            const strats = getStrategies();
+                            strategySelect.innerHTML = strats.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+                            if (selectedName && strats.some(s=>s.name===selectedName)) {
+                                strategySelect.value = selectedName;
+                            }
+                        }
+                        // Initial load
+                        refreshStrategyDropdown(localStorage.getItem(cacheKeys.strategy));
+                        // Restore cached selection
+                        if (localStorage.getItem(cacheKeys.strategy)) {
+                            strategySelect.value = localStorage.getItem(cacheKeys.strategy);
+                        }
+                        // Save on change
+                        const cacheInput = (id, key) => {
+                            const el = document.getElementById(id);
+                            if (el) {
+                                el.addEventListener('input', e => {
+                                    localStorage.setItem(key, e.target.value);
+                                });
+                            }
+                        };
+                        cacheInput('loan-amount', cacheKeys.amount);
+                        cacheInput('interest-rate', cacheKeys.interest);
+                        cacheInput('loan-term', cacheKeys.term);
+                        strategySelect.addEventListener('change', e => {
+                            localStorage.setItem(cacheKeys.strategy, e.target.value);
+                        });
+
+                        // Add strategy popup logic
+                        addBtn.addEventListener('click', function() {
+                            modal.style.display = 'flex';
+                            modalNameInput.value = '';
+                            setTimeout(()=>modalNameInput.focus(), 100);
+                        });
+                        modalCancel.addEventListener('click', function() {
+                            modal.style.display = 'none';
+                        });
+                        modalSave.addEventListener('click', function() {
+                            const name = modalNameInput.value.trim();
+                            if (!name) return;
+                            let strats = getStrategies();
+                            if (strats.some(s => s.name === name)) {
+                                alert('A strategy with this name already exists.');
+                                return;
+                            }
+                            // Default values for new strategies
+                            strats.push({name, growth: 5, reserve: 0, reserveRate: 0});
+                            saveStrategies(strats);
+                            refreshStrategyDropdown(name);
+                            strategySelect.value = name;
+                            localStorage.setItem(cacheKeys.strategy, name);
+                            modal.style.display = 'none';
+                        });
+                        modalNameInput.addEventListener('keydown', function(e) {
+                            if (e.key === 'Enter') {
+                                modalSave.click();
+                            }
+                        });
+
+                        // Edit strategy logic
+                        editBtn.addEventListener('click', function() {
+                            const strats = getStrategies();
+                            const selected = strategySelect.value;
+                            const strat = strats.find(s => s.name === selected);
+                            if (strat) {
+                                editingStrategy = strat.name;
+                                editModalName.value = strat.name;
+                                editModalReserve.value = strat.reserve ?? 0;
+                                editModalReserveRate.value = strat.reserveRate ?? 0;
+                                editModal.style.display = 'flex';
+                                setTimeout(()=>editModalName.focus(), 100);
+                            }
+                        });
+                        editModalCancel.addEventListener('click', function() {
+                            editModal.style.display = 'none';
+                            editingStrategy = null;
+                        });
+                        editModalSave.addEventListener('click', function() {
+                            const name = editModalName.value.trim();
+                            const reserve = parseFloat(editModalReserve.value);
+                            const reserveRate = parseFloat(editModalReserveRate.value);
+                            if (!name || isNaN(reserve) || isNaN(reserveRate)) return;
+                            let strats = getStrategies();
+                            // Prevent duplicate name (unless it's the same strategy)
+                            if (strats.some(s => s.name === name && s.name !== editingStrategy)) {
+                                alert('A strategy with this name already exists.');
+                                return;
+                            }
+                            strats = strats.map(s => s.name === editingStrategy ? {...s, name, reserve, reserveRate} : s);
+                            saveStrategies(strats);
+                            refreshStrategyDropdown(name);
+                            strategySelect.value = name;
+                            localStorage.setItem(cacheKeys.strategy, name);
+                            editModal.style.display = 'none';
+                            editingStrategy = null;
+                        });
+                        [editModalName, editModalReserve, editModalReserveRate].forEach(input => {
+                            input.addEventListener('keydown', function(e) {
+                                if (e.key === 'Enter') {
+                                    editModalSave.click();
+                                }
+                            });
+                        });
+                        // Delete selected strategy
+                        deleteBtn.addEventListener('click', function() {
+                            let strats = getStrategies();
+                            const selected = strategySelect.value;
+                            if (!confirm('Delete strategy "' + selected + '"?')) return;
+                            strats = strats.filter(s => s.name !== selected);
+                            saveStrategies(strats);
+                            refreshStrategyDropdown();
+                            strategySelect.value = strats.length ? strats[0].name : '';
+                            localStorage.setItem(cacheKeys.strategy, strategySelect.value);
+                        });
+
+                        document.getElementById('run-simulation').addEventListener('click', function(e) {
+                            e.preventDefault();
+                            const amount = parseFloat(document.getElementById('loan-amount').value);
+                            const interestRate = parseFloat(document.getElementById('interest-rate').value);
+                            const term = parseInt(document.getElementById('loan-term').value);
+                            const strategyName = strategySelect.value;
+                            const strats = getStrategies();
+                            const strat = strats.find(s => s.name === strategyName);
+                            if (isNaN(amount) || isNaN(interestRate) || isNaN(term) || !strat) {
+                                alert('Please enter valid loan details and select a strategy.');
+                                return;
+                            }
+                            const growthRate = strat.growth / 100;
+                            const loan = new Loan(amount, interestRate, term);
+                            const investment = new Investment(amount, growthRate, term);
+                            const monthlyPayment = loan.calculateMonthlyPayment();
+                            const totalRepayment = loan.calculateTotalRepayment();
+                            const futureValue = investment.calculateFutureValue();
+                            const returns = investment.calculateReturns();
+                            // Results summary
+                            const resultsDiv = document.getElementById('dashboard-simulation-results');
+                            resultsDiv.innerHTML = `
+                                <h2>Simulation Results</h2>
+                                <p><strong>Monthly Payment:</strong> $${monthlyPayment.toFixed(2)}</p>
+                                <p><strong>Total Repayment:</strong> $${totalRepayment.toFixed(2)}</p>
+                                <p><strong>Investment Future Value:</strong> $${futureValue.toFixed(2)}</p>
+                                <p><strong>Investment Returns:</strong> $${returns.toFixed(2)}</p>
+                                <p><strong>Net Gain/Loss:</strong> $${(returns - (totalRepayment - amount)).toFixed(2)}</p>
+                            `;
+                            // Chart
+                            const ctx = document.getElementById('dashboard-results-chart').getContext('2d');
+                            if (window.dashboardChart) window.dashboardChart.destroy();
+                            window.dashboardChart = new Chart(ctx, {
+                                type: 'line',
+                                data: {
+                                    labels: Array.from({length: term+1}, (_, i) => `Year ${i}`),
+                                    datasets: [
+                                        {
+                                            label: 'Loan Balance',
+                                            data: Array.from({length: term+1}, (_, i) => amount - (monthlyPayment * 12 * i)),
+                                            borderColor: 'rgba(75,192,192,1)',
+                                            fill: false
+                                        },
+                                        {
+                                            label: 'Investment Value',
+                                            data: Array.from({length: term+1}, (_, i) => amount * Math.pow(1 + growthRate, i)),
+                                            borderColor: 'rgba(153,102,255,1)',
+                                            fill: false
+                                        }
+                                    ]
+                                },
+                                options: {
+                                    responsive: true,
+                                    plugins: { legend: { position: 'top' } },
+                                    scales: { y: { beginAtZero: true } }
+                                }
+                            });
+                        });
+                    });
+                });
+        </script>
+</body>
+</html>
