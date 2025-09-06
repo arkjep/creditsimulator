@@ -61,8 +61,15 @@
 				<div id="scenario-modal" style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
 					<div style="background:#232836;padding:32px 24px 24px 24px;border-radius:8px;box-shadow:0 2px 16px #000;width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:stretch;">
 						<h3 style="color:#fff;margin-top:0;">New Scenario</h3>
-						<label for="modal-scenario-name" style="color:#b0b8d1;">Scenario Name</label>
-						<input type="text" id="modal-scenario-name" style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<!-- Remove scenario name input from new scenario modal -->
+						<!-- <label for="modal-scenario-name" style="color:#b0b8d1;">Scenario Name</label> -->
+						<!-- <input type="text" id="modal-scenario-name" style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;"> -->
+						<label for="modal-scenario-date" style="color:#b0b8d1;">Date</label>
+						<input type="date" id="modal-scenario-date" required style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<label for="modal-scenario-interest" style="color:#b0b8d1;">Interest Rate (%)</label>
+						<input type="number" id="modal-scenario-interest" step="0.01" required style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<label for="modal-scenario-term" style="color:#b0b8d1;">Term (years)</label>
+						<input type="number" id="modal-scenario-term" required style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<button id="modal-save-scenario" class="sidebar-btn" style="margin-bottom:8px;">Save</button>
 						<button id="modal-cancel-scenario" class="sidebar-btn" style="background:#444a5a;">Cancel</button>
 					</div>
@@ -71,14 +78,15 @@
 				<div id="scenario-edit-modal" style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
 					<div style="background:#232836;padding:32px 24px 24px 24px;border-radius:8px;box-shadow:0 2px 16px #000;width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:stretch;">
 						<h3 style="color:#fff;margin-top:0;">Edit Scenario</h3>
-						<label for="edit-scenario-name" style="color:#b0b8d1;">Scenario Name</label>
-						<input type="text" id="edit-scenario-name" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
-						<label for="edit-scenario-loan" style="color:#b0b8d1;">Loan Amount</label>
-						<input type="number" id="edit-scenario-loan" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<!-- Remove scenario name input from edit scenario modal -->
+						<!-- <label for="edit-scenario-name" style="color:#b0b8d1;">Scenario Name</label> -->
+						<!-- <input type="text" id="edit-scenario-name" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;"> -->
 						<label for="edit-scenario-interest" style="color:#b0b8d1;">Interest Rate (%)</label>
 						<input type="number" id="edit-scenario-interest" step="0.01" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<label for="edit-scenario-term" style="color:#b0b8d1;">Term (years)</label>
 						<input type="number" id="edit-scenario-term" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<label for="edit-scenario-date" style="color:#b0b8d1;">Date</label>
+						<input type="date" id="edit-scenario-date" required style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<button id="edit-modal-save-scenario" class="sidebar-btn" style="margin-bottom:8px;">Save</button>
 						<button id="edit-modal-cancel-scenario" class="sidebar-btn" style="background:#444a5a;">Cancel</button>
 					</div>
@@ -118,7 +126,7 @@
 						fundReturnInput.value = 40;
 					}
 					// --- STRATEGY MANAGEMENT ---
-					const STRATEGY_KEY = 'dashboard_strategies';
+					const STRATEGY_KEY = 'creditsimulator_strategies';
 					const strategySelect = document.getElementById('investment-strategy');
 					const addBtn = document.getElementById('add-strategy');
 					const modal = document.getElementById('strategy-modal');
@@ -142,9 +150,7 @@
 					function getStrategies() {
 						const raw = localStorage.getItem(STRATEGY_KEY);
 						if (!raw) return [
-							{name:'Conservative', growth:3, reserve:10, reserveRate:2},
-							{name:'Moderate', growth:6, reserve:5, reserveRate:1},
-							{name:'Aggressive', growth:10, reserve:0, reserveRate:0}
+							{name:'Raw', reserve:0, reserveRate:0},
 						];
 						try { return JSON.parse(raw); } catch { return []; }
 					}
@@ -266,18 +272,18 @@
 					});
 
 					// --- SCENARIO MANAGEMENT ---
-					const SCENARIO_KEY = 'dashboard_scenarios';
+					const SCENARIO_KEY = 'creditsimulator_scenarios';
 					const scenarioSelect = document.getElementById('scenario-select');
 					const addScenarioBtn = document.getElementById('add-scenario');
 					const editScenarioBtn = document.getElementById('edit-scenario');
 					const deleteScenarioBtn = document.getElementById('delete-scenario');
 					const scenarioModal = document.getElementById('scenario-modal');
-					const scenarioModalName = document.getElementById('modal-scenario-name');
 					const scenarioModalSave = document.getElementById('modal-save-scenario');
+					const scenarioModalInterest = document.getElementById('modal-scenario-interest');
+					const scenarioModalTerm = document.getElementById('modal-scenario-term');
+					const scenarioModalDate = document.getElementById('modal-scenario-date');
 					const scenarioModalCancel = document.getElementById('modal-cancel-scenario');
 					const editScenarioModal = document.getElementById('scenario-edit-modal');
-					const editScenarioName = document.getElementById('edit-scenario-name');
-					const editScenarioLoan = document.getElementById('edit-scenario-loan');
 					const editScenarioInterest = document.getElementById('edit-scenario-interest');
 					const editScenarioTerm = document.getElementById('edit-scenario-term');
 					const editScenarioModalSave = document.getElementById('edit-modal-save-scenario');
@@ -304,29 +310,33 @@
 					// Add scenario
 					addScenarioBtn.addEventListener('click', function() {
 						scenarioModal.style.display = 'flex';
-						scenarioModalName.value = '';
-						setTimeout(()=>scenarioModalName.focus(), 100);
+						document.getElementById('modal-scenario-date').value = '';
+						setTimeout(()=>scenarioModalInterest.focus(), 100);
 					});
 					scenarioModalCancel.addEventListener('click', function() {
 						scenarioModal.style.display = 'none';
 					});
 					scenarioModalSave.addEventListener('click', function() {
-						const name = scenarioModalName.value.trim();
-						if (!name) return;
+						// In add scenario logic, generate name from interest, term, and date
+						const interest = parseFloat(document.getElementById('modal-scenario-interest').value);
+						const term = parseInt(document.getElementById('modal-scenario-term').value);
+						const date = document.getElementById('modal-scenario-date').value;
+						if (isNaN(interest) || isNaN(term) || !date) {
+							alert('Please enter interest, term, and date.');
+							return;
+						}
+						const name = `${interest}% ${term}yr ${new Date(date + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC' })}`;
 						let scenarios = getScenarios();
 						if (scenarios.some(s => s.name === name)) {
-							alert('A scenario with this name already exists.');
+							alert('A scenario with these parameters already exists.');
 							return;
 						}
 						// Default values for new scenario
-						scenarios.push({name, loan: 10000, interest: 5, term: 5, growth: 5});
+						scenarios.push({name, interest, term, date});
 						saveScenarios(scenarios);
 						refreshScenarioDropdown(name);
 						scenarioSelect.value = name;
 						scenarioModal.style.display = 'none';
-					});
-					scenarioModalName.addEventListener('keydown', function(e) {
-						if (e.key === 'Enter') scenarioModalSave.click();
 					});
 					// Edit scenario
 					editScenarioBtn.addEventListener('click', function() {
@@ -335,12 +345,11 @@
 						const scenario = scenarios.find(s => s.name === selected);
 						if (scenario) {
 							editingScenario = scenario.name;
-							editScenarioName.value = scenario.name;
-							editScenarioLoan.value = scenario.loan;
 							editScenarioInterest.value = scenario.interest;
 							editScenarioTerm.value = scenario.term;
+							document.getElementById('edit-scenario-date').value = scenario.date || '';
 							editScenarioModal.style.display = 'flex';
-							setTimeout(()=>editScenarioName.focus(), 100);
+							setTimeout(()=>editScenarioInterest.focus(), 100);
 						}
 					});
 					editScenarioModalCancel.addEventListener('click', function() {
@@ -348,25 +357,28 @@
 						editingScenario = null;
 					});
 					editScenarioModalSave.addEventListener('click', function() {
-						const name = editScenarioName.value.trim();
-						const loan = parseFloat(editScenarioLoan.value);
+						// In edit scenario logic, generate name from interest, term, and date
 						const interest = parseFloat(editScenarioInterest.value);
 						const term = parseInt(editScenarioTerm.value);
-						if (!name || isNaN(loan) || isNaN(interest) || isNaN(term)) return;
-						let scenarios = getScenarios();
-						// Prevent duplicate name (unless it's the same scenario)
-						if (scenarios.some(s => s.name === name && s.name !== editingScenario)) {
-							alert('A scenario with this name already exists.');
+						const date = document.getElementById('edit-scenario-date').value;
+						if (isNaN(interest) || isNaN(term) || !date) {
+							alert('Please enter interest, term, and date.');
 							return;
 						}
-						scenarios = scenarios.map(s => s.name === editingScenario ? {...s, name, loan, interest, term} : s);
+						const name = `${interest}% ${term}yr ${new Date(date + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC' })}`;
+						let scenarios = getScenarios();
+						if (scenarios.some(s => s.name === name && s.name !== editingScenario)) {
+							alert('A scenario with these parameters already exists.');
+							return;
+						}
+						scenarios = scenarios.map(s => s.name === editingScenario ? {...s, name, interest, term, date} : s);
 						saveScenarios(scenarios);
 						refreshScenarioDropdown(name);
 						scenarioSelect.value = name;
 						editScenarioModal.style.display = 'none';
 						editingScenario = null;
 					});
-					[editScenarioName, editScenarioLoan, editScenarioInterest, editScenarioTerm].forEach(input => {
+					[editScenarioInterest, editScenarioTerm].forEach(input => {
 						input.addEventListener('keydown', function(e) {
 							if (e.key === 'Enter') editScenarioModalSave.click();
 						});
@@ -422,7 +434,7 @@
 							return dailyData;
 						};
 
-						const amount = scenario.loan;
+						const amount = 10000;
 						const interestRate = scenario.interest / 100;
 						const term = scenario.term;
 						const fundReturn = parseFloat(document.getElementById('fund-return').value) / 100;
@@ -496,10 +508,17 @@
 							return out;
 						}
 
-						const spNormalized = adjustToTargetCAGR(spData, amount, fundReturn, 252, 1);
-
-						// Normalize S&P data to start at the same value as loan amount
-						// const spNormalized = adjustedCompoundData.map(point => (point / spData[0]) * amount);
+						// Find the index in spCandles that matches the scenario's date
+						const scenarioStartIdx = spCandles.findIndex(c => c.date === scenario.date);
+						if (scenarioStartIdx === -1) {
+							alert('No SPY data available for the selected scenario date.');
+							return;
+						}
+						// Slice the SPY and compound data to start at the scenario date
+						const spCandlesOffset = spCandles.slice(scenarioStartIdx);
+						const spDataOffset = spData.slice(scenarioStartIdx);
+						const compoundInterestDataOffset = compoundInterestData.slice(0, spDataOffset.length);
+						const spNormalizedOffset = adjustToTargetCAGR(spDataOffset, amount, fundReturn, 252, 1);
 
 						// Results summary
 						const resultsDiv = document.getElementById('dashboard-simulation-results');
@@ -510,21 +529,21 @@
 						window.dashboardChart = new Chart(ctx, {
 							type: 'line',
 							data: {
-								labels: compoundInterestData.map((_, i) => {
-									const date = new Date(spCandles[i]?.date);
+								labels: compoundInterestDataOffset.map((_, i) => {
+									const date = new Date(spCandlesOffset[i]?.date);
 									return date.toLocaleDateString();
 								}),
 								datasets: [
 									{
 										label: 'Compound Interest',
-										data: compoundInterestData,
+										data: compoundInterestDataOffset,
 										borderColor: 'rgba(75,192,192,1)',
 										fill: false,
 										pointRadius: 0
 									},
 									{
 										label: 'S&P 500 Adjusted',
-										data: spNormalized.slice(0, compoundInterestData.length),
+										data: spNormalizedOffset.slice(0, compoundInterestDataOffset.length),
 										borderColor: 'rgba(153,102,255,1)',
 										fill: false,
 										pointRadius: 0
