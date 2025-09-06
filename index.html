@@ -13,7 +13,7 @@
 			<div class="sidebar-section" id="sidebar-general">
 				<h3>General Settings</h3>
 				<label for="fund-return">Fund Return (%)</label>
-				<input type="number" id="fund-return" step="0.01" required>
+				<input type="number" id="fund-return" step="1" required>
 			</div>
             <div class="sidebar-section" id="sidebar-strategy">
 				<h3>Credit Strategy</h3>
@@ -91,7 +91,7 @@
             </header>
             <section id="dashboard">
                 <div id="dashboard-simulation-results" class="results"></div>
-                <canvas id="dashboard-results-chart" height="100"></canvas>
+				<canvas id="dashboard-results-chart"></canvas>
             </section>
             <footer>
                 <p>&copy; 2025 Credit Risk Simulator</p>
@@ -505,7 +505,7 @@
 						window.dashboardChart = new Chart(ctx, {
 							type: 'line',
 							data: {
-								labels: spData.map((_, i) => {
+								labels: compoundInterestData.map((_, i) => {
 									const date = new Date(spCandles[i]?.datetime || Date.now());
 									return date.toLocaleDateString();
 								}),
@@ -519,7 +519,7 @@
 									},
 									{
 										label: 'S&P 500 Adjusted',
-										data: spNormalized,
+										data: spNormalized.slice(0, compoundInterestData.length),
 										borderColor: 'rgba(153,102,255,1)',
 										fill: false,
 										pointRadius: 0
@@ -528,13 +528,34 @@
 							},
 							options: {
 								responsive: true,
-								plugins: { legend: { position: 'top' } },
-								scales: { 
-									y: { beginAtZero: true },
+								layout: { padding: 24 },
+								plugins: {
+									legend: {
+										position: 'top',
+										labels: { color: '#b0b8d1' }
+									},
+									title: {
+										display: false,
+										color: '#b0b8d1'
+									},
+									tooltip: {
+										bodyColor: '#b0b8d1',
+										titleColor: '#b0b8d1',
+										footerColor: '#b0b8d1'
+									}
+								},
+								scales: {
+									y: {
+										beginAtZero: true,
+										ticks: { color: '#b0b8d1' },
+										grid: { color: 'rgba(176,184,209,0.10)' }
+									},
 									x: {
 										ticks: {
-											maxTicksLimit: 10
-										}
+											maxTicksLimit: 10,
+											color: '#b0b8d1'
+										},
+										grid: { color: 'rgba(176,184,209,0.15)' }
 									}
 								}
 							}
