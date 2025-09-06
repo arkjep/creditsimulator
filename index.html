@@ -399,7 +399,12 @@
 							try {
 								const response = await fetch('pricehistory/SPY.json');
 								const spyData = await response.json();
-								return spyData;
+								return spyData.map(c => ({ 
+									...c, 
+									date: c.date || new Date(c.datetime * 1000).toLocaleDateString('en-CA', {
+										timeZone: 'America/New_York'
+									})
+								}));
 							} catch (error) {
 								console.error('Error loading SPY data:', error);
 								throw error;
@@ -506,7 +511,7 @@
 							type: 'line',
 							data: {
 								labels: compoundInterestData.map((_, i) => {
-									const date = new Date(spCandles[i]?.datetime || Date.now());
+									const date = new Date(spCandles[i]?.date);
 									return date.toLocaleDateString();
 								}),
 								datasets: [
