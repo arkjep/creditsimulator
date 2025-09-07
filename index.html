@@ -463,7 +463,7 @@
 			};
 
 			// Generate compound interest data for the loan
-			const generateCompoundInterestData = (principal, annualRate, years, basis = 365) => {
+			const generateCompoundInterestData = (principal, annualRate, years, basis = 252) => {
 				const nDays = Math.round(years * basis);
 				const dailyRate = Math.pow(1 + annualRate, 1 / basis) - 1;
 				const dailyData = new Array(nDays + 1);
@@ -685,6 +685,16 @@
 								label: 'Net Performance',
 								data: netPerformance.slice(0, compoundInterestDataOffset.length),
 								borderColor: 'rgba(107,191,123,1)',
+								fill: false,
+								pointRadius: 0
+							},
+							{
+								label: 'Profit',
+								data: spNormalizedOffset.slice(0, compoundInterestDataOffset.length).map((v, i) => {
+									const afterTax = amount + v - compoundWithTax[i];
+									return afterTax - netPerformance[i];
+								}),
+								borderColor: 'rgba(255, 193, 7, 1)', // amber
 								fill: false,
 								pointRadius: 0
 							}
