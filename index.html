@@ -93,18 +93,18 @@
 				</div>
 			</div>
         </aside>
-        <main class="main-area">
-            <header>
-                <!-- <h1>Credit Risk Simulator Dashboard</h1> -->
-            </header>
-            <section id="dashboard">
-                <div id="dashboard-simulation-results" class="results"></div>
-				<canvas id="dashboard-results-chart"></canvas>
-            </section>
-            <footer>
-                <p>&copy; 2025 Credit Risk Simulator</p>
-            </footer>
-        </main>
+		<main class="main-area">
+			<header>
+				<!-- <h1>Credit Risk Simulator Dashboard</h1> -->
+			</header>
+			<section id="dashboard">
+				<div id="dashboard-simulation-results" class="results"></div>
+				<div class="dashboard-charts-scroll"><div id="dashboard-charts-container"></div></div>
+			</section>
+			<footer>
+				<p>&copy; 2025 Credit Risk Simulator</p>
+			</footer>
+		</main>
     </div>
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
@@ -363,6 +363,7 @@
 			}
 			const name = `${interest}% ${term}yr ${new Date(date + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC' })}`;
 			let scenarios = getScenarios();
+			// Prevent duplicate name (unless it's the same scenario)
 			if (scenarios.some(s => s.name === name && s.name !== editingScenario)) {
 				alert('A scenario with these parameters already exists.');
 				return;
@@ -376,10 +377,13 @@
 		});
 		[editScenarioInterest, editScenarioTerm].forEach(input => {
 			input.addEventListener('keydown', function(e) {
-				if (e.key === 'Enter') editScenarioModalSave.click();
+				if (e.key === 'Enter') {
+					editScenarioModalSave.click();
+				}
 			});
 		});
-		// Delete scenario
+
+		// Delete selected scenario
 		deleteScenarioBtn.addEventListener('click', function() {
 			let scenarios = getScenarios();
 			const selected = scenarioSelect.value;
@@ -388,7 +392,11 @@
 			scenarios = scenarios.filter(s => s.name !== selected);
 			saveScenarios(scenarios);
 			refreshScenarioDropdown();
-			scenarioSelect.value = scenarios.length ? scenarios[0].name : '';
+			if (scenarios.length) {
+				scenarioSelect.value = scenarios[0].name;
+			} else {
+				scenarioSelect.value = '';
+			}
 		});
 
 		document.getElementById('run-simulation').addEventListener('click', async function(e) {
@@ -397,9 +405,8 @@
 			const strategies = getStrategies();
 			const strategy = strategies.find(s => s.name === strategyName);
 			const scenarios = getScenarios();
-			const scenario = scenarios.find(s => s.name === scenarioSelect.value);
-			if (!scenario || !strategy) {
-				alert('Please select a scenario and a strategy.');
+			if (!scenarios.length || !strategy) {
+				alert('Please create at least one scenario and select a strategy.');
 				return;
 			}
 
@@ -431,155 +438,190 @@
 			};
 
 			const amount = 10000;
-			const interestRate = scenario.interest / 100;
-			const term = scenario.term;
 			const fundReturn = parseFloat(document.getElementById('fund-return').value) / 100;
-		
-			// Generate data for charts
+
+			// Load SPY data once
 			const spCandles = await loadSPYData();
 			const spData = spCandles.map(c => c.close);
-			const compoundInterestData = generateCompoundInterestData(amount, interestRate, term);
 
-			// // Calculate average annualized return of SPY data
-			// const calculateAnnualizedReturn = (prices) => {
-			// 	if (prices.length < 2) return 0;
-			// 	const startValue = prices[0];
-			// 	const endValue = prices[prices.length - 1];
-			// 	const totalPeriods = prices.length - 1; // Number of periods between prices
-			// 	const yearsElapsed = totalPeriods / 252; // Convert to years (252 trading days)
+			// Chart container
+			const chartsContainer = document.getElementById('dashboard-charts-container');
+			chartsContainer.innerHTML = '';
+			const resultsDiv = document.getElementById('dashboard-simulation-results');
+			resultsDiv.innerHTML = '';
 
-			// 	if (yearsElapsed <= 0 || startValue <= 0) return 0;
+			// Store chart instances to destroy later if needed
+			if (!window.dashboardCharts) window.dashboardCharts = [];
+			window.dashboardCharts.forEach(chart => chart.destroy());
+			window.dashboardCharts = [];
 
-			// 	// CAGR = (Ending Value / Beginning Value)^(1/n) - 1
-			// 	const cagr = Math.pow(endValue / startValue, 1 / yearsElapsed) - 1;
-			// 	return cagr * 100; // Return as percentage
-			// };
+			// For each scenario, run simulation and create chart
+			for (const scenario of scenarios) {
+				const interestRate = scenario.interest / 100;
+				const term = scenario.term;
+				const compoundInterestData = generateCompoundInterestData(amount, interestRate, term);
 
-			// const spyAnnualizedReturn = calculateAnnualizedReturn(spData);
-			// console.log(`SPY Average Annualized Return: ${spyAnnualizedReturn.toFixed(2)}%`);
-
-			const spyAnnualizedReturn = 10.4; // Approximate historical average
-			
-			// Find the lowest point in spData
-			const minSpyValue = Math.min(...spData);
-			const minSpyIndex = spData.findIndex(value => value === minSpyValue);
-
-			// Calculate the drawdown percentage from start to minimum
-			const drawdownPercent = (minSpyValue - spData[0]) / spData[0];
-
-			// Generate a new compound curve that follows fundReturn but includes the market drawdown pattern
-			function adjustToTargetCAGR(spData, amount, targetCagr, basis = BASIS, volScale = 1) {
-				if (!spData || spData.length < 2) return [];
-
-				const n = spData.length;
-				const p0 = spData[0];
-				const yearsTotal = (n - 1) / basis;
-
-				// Realized SPY CAGR over the provided window (don’t hardcode 10.4%)
-				const spyCagr = Math.pow(spData[n - 1] / p0, 1 / yearsTotal) - 1;
-
-				// Work in log space for clean trend removal / reapplication
-				const spySlope = Math.log(1 + spyCagr);
-				const tgtSlope = Math.log(1 + targetCagr);
-
-				const out = new Array(n);
-				for (let i = 0; i < n; i++) {
-					const tYears = i / basis;
-
-					// Detrend SPY: shape oscillates ~1.0 and captures drawdowns/zigzags
-					// shape_t = exp( log(P_t/P0) - spySlope * t )
-					const logRel = Math.log(spData[i] / p0);
-					const shape = Math.exp((logRel - spySlope * tYears) * volScale);
-
-					// Apply target trend + shape, scaled to your starting amount
-					// out_t = amount * exp(tgtSlope * t) * shape
-					out[i] = amount * Math.exp(tgtSlope * tYears) * shape;
+				// Generate a new compound curve that follows fundReturn but includes the market drawdown pattern
+				function adjustToTargetCAGR(spData, amount, targetCagr, basis = 252, volScale = 1) {
+					if (!spData || spData.length < 2) return [];
+					const n = spData.length;
+					const p0 = spData[0];
+					const yearsTotal = (n - 1) / basis;
+					const spyCagr = Math.pow(spData[n - 1] / p0, 1 / yearsTotal) - 1;
+					const spySlope = Math.log(1 + spyCagr);
+					const tgtSlope = Math.log(1 + targetCagr);
+					const out = new Array(n);
+					for (let i = 0; i < n; i++) {
+						const tYears = i / basis;
+						const logRel = Math.log(spData[i] / p0);
+						const shape = Math.exp((logRel - spySlope * tYears) * volScale);
+						out[i] = amount * Math.exp(tgtSlope * tYears) * shape;
+					}
+					return out;
 				}
 
-				// Numerical drift is usually negligible; if you want a perfect terminal pin, uncomment:
-				// const desiredEnd = amount * Math.pow(1 + targetCagr, yearsTotal);
-				// const scaleFix = desiredEnd / out[n - 1];
-				// for (let i = 0; i < n; i++) out[i] *= scaleFix;
+				// Find the index in spCandles that matches the scenario's date
+				const scenarioStartIdx = spCandles.findIndex(c => c.date === scenario.date);
+				if (scenarioStartIdx === -1) {
+					// Show error for this scenario
+					const errorDiv = document.createElement('div');
+					errorDiv.style.color = 'red';
+					errorDiv.textContent = `No SPY data available for scenario: ${scenario.name}`;
+					chartsContainer.appendChild(errorDiv);
+					continue;
+				}
+				// Slice the SPY and compound data to start at the scenario date
+				const spCandlesOffset = spCandles.slice(scenarioStartIdx);
+				const spDataOffset = spData.slice(scenarioStartIdx);
+				const compoundInterestDataOffset = compoundInterestData.slice(0, spDataOffset.length);
+				const spNormalizedOffset = adjustToTargetCAGR(spDataOffset, amount, fundReturn, 252, 1);
 
-				return out;
-			}
-
-			// Find the index in spCandles that matches the scenario's date
-			const scenarioStartIdx = spCandles.findIndex(c => c.date === scenario.date);
-			if (scenarioStartIdx === -1) {
-				alert('No SPY data available for the selected scenario date.');
-				return;
-			}
-			// Slice the SPY and compound data to start at the scenario date
-			const spCandlesOffset = spCandles.slice(scenarioStartIdx);
-			const spDataOffset = spData.slice(scenarioStartIdx);
-			const compoundInterestDataOffset = compoundInterestData.slice(0, spDataOffset.length);
-			const spNormalizedOffset = adjustToTargetCAGR(spDataOffset, amount, fundReturn, 252, 1);
-
-			// Results summary
-			const resultsDiv = document.getElementById('dashboard-simulation-results');
-			resultsDiv.innerHTML = ``;
-			// Chart
-			const ctx = document.getElementById('dashboard-results-chart').getContext('2d');
-			if (window.dashboardChart) window.dashboardChart.destroy();
-			window.dashboardChart = new Chart(ctx, {
-				type: 'line',
-				data: {
-					labels: compoundInterestDataOffset.map((_, i) => {
-						const date = new Date(spCandlesOffset[i]?.date);
-						return date.toLocaleDateString();
-					}),
-					datasets: [
-						{
-							label: 'Compound Interest',
-							data: compoundInterestDataOffset,
-							borderColor: 'rgba(75,192,192,1)',
-							fill: false,
-							pointRadius: 0
-						},
-						{
-							label: 'S&P 500 Adjusted',
-							data: spNormalizedOffset.slice(0, compoundInterestDataOffset.length),
-							borderColor: 'rgba(153,102,255,1)',
-							fill: false,
-							pointRadius: 0
-						}
-					]
-				},
-				options: {
-					responsive: true,
-					layout: { padding: 24 },
-					plugins: {
-						legend: {
-							position: 'top',
-							labels: { color: '#b0b8d1' }
-						},
-						title: {
-							display: false,
-							color: '#b0b8d1'
-						},
-						tooltip: {
-							bodyColor: '#b0b8d1',
-							titleColor: '#b0b8d1',
-							footerColor: '#b0b8d1'
-						}
-					},
-					scales: {
-						y: {
-							beginAtZero: true,
-							ticks: { color: '#b0b8d1' },
-							grid: { color: 'rgba(176,184,209,0.10)' }
-						},
-						x: {
-							ticks: {
-								maxTicksLimit: 10,
-								color: '#b0b8d1'
-							},
-							grid: { color: 'rgba(176,184,209,0.15)' }
+				// Results summary for each scenario (optional, can be expanded)
+				// Calculate analysis metrics
+				const finalCompound = compoundInterestDataOffset[compoundInterestDataOffset.length - 1];
+				const finalFund = spNormalizedOffset[compoundInterestDataOffset.length - 1];
+				const outperformancePercent = ((finalFund - finalCompound) / finalCompound * 100).toFixed(2);
+				
+				// Calculate underwater statistics
+				let underwaterDays = 0;
+				let maxDrawdown = 0;
+				for (let i = 0; i < compoundInterestDataOffset.length; i++) {
+					const compound = compoundInterestDataOffset[i];
+					const fund = spNormalizedOffset[i];
+					if (fund < compound) {
+						underwaterDays++;
+						const drawdown = (compound - fund) / compound * 100;
+						if (drawdown > maxDrawdown) {
+							maxDrawdown = drawdown;
 						}
 					}
 				}
-			});
+				const underwaterPercent = (underwaterDays / compoundInterestDataOffset.length * 100).toFixed(1);
+
+				const scenarioResultDiv = document.createElement('div');
+				scenarioResultDiv.className = 'scenario-result';
+				scenarioResultDiv.style.marginBottom = '8px';
+				scenarioResultDiv.style.padding = '6px 10px';
+				scenarioResultDiv.style.border = '1px solid #444a5a';
+				scenarioResultDiv.style.borderRadius = '5px';
+				scenarioResultDiv.style.background = '#232836';
+				scenarioResultDiv.innerHTML = `
+					<div style="font-weight:bold;margin-bottom:4px;color:#fff;font-size:1.04em;">${scenario.name}</div>
+					<div style="color:#b0b8d1;line-height:1.2;font-size:0.98em;">
+						Final vs Compound: <span style="color:${outperformancePercent >= 0 ? '#6bbf7b' : '#b97a7a'};font-weight:bold;">${outperformancePercent >= 0 ? '+' : ''}${outperformancePercent}%</span>
+						&nbsp;|&nbsp; Underwater: <span style="color:#e0e0e0;">${underwaterPercent}%</span>
+						&nbsp;|&nbsp; Max Drawdown: <span style="color:#b97a7a;">${maxDrawdown.toFixed(2)}%</span>
+					</div>
+				`;
+				resultsDiv.appendChild(scenarioResultDiv);
+
+
+				// Create a wrapper for each chart and its stats
+				const chartWrapper = document.createElement('div');
+				chartWrapper.className = 'scenario-chart-wrapper';
+				chartWrapper.style.marginBottom = '32px';
+
+				// Scenario stats summary
+				const statsDiv = document.createElement('div');
+				statsDiv.className = 'scenario-stats';
+				statsDiv.style.marginBottom = '12px';
+				statsDiv.style.fontSize = '1.08em';
+				statsDiv.style.color = '#b0b8d1';
+				statsDiv.innerHTML = `
+					Interest: <b>${scenario.interest}%</b> &nbsp;|
+					Term: <b>${scenario.term} yr</b> &nbsp;|
+					Start Date: <b>${scenario.date}</b>
+				`;
+				chartWrapper.appendChild(statsDiv);
+
+				// Chart canvas
+				const canvas = document.createElement('canvas');
+				canvas.width = 1200;
+				canvas.height = 800;
+				chartWrapper.appendChild(canvas);
+				chartsContainer.appendChild(chartWrapper);
+
+				const ctx = canvas.getContext('2d');
+				const chart = new Chart(ctx, {
+					type: 'line',
+					data: {
+						labels: compoundInterestDataOffset.map((_, i) => {
+							const date = new Date(spCandlesOffset[i]?.date);
+							return date.toLocaleDateString();
+						}),
+						datasets: [
+							{
+								label: 'Compound Interest',
+								data: compoundInterestDataOffset,
+								borderColor: 'rgba(75,192,192,1)',
+								fill: false,
+								pointRadius: 0
+							},
+							{
+								label: 'S&P 500 Adjusted',
+								data: spNormalizedOffset.slice(0, compoundInterestDataOffset.length),
+								borderColor: 'rgba(153,102,255,1)',
+								fill: false,
+								pointRadius: 0
+							}
+						]
+					},
+					options: {
+						responsive: false,
+						layout: { padding: 24 },
+						plugins: {
+							legend: {
+								position: 'top',
+								labels: { color: '#b0b8d1' }
+							},
+							title: {
+								display: false,
+								color: '#b0b8d1'
+							},
+							tooltip: {
+								bodyColor: '#b0b8d1',
+								titleColor: '#b0b8d1',
+								footerColor: '#b0b8d1'
+							}
+						},
+						scales: {
+							y: {
+								beginAtZero: true,
+								ticks: { color: '#b0b8d1' },
+								grid: { color: 'rgba(176,184,209,0.10)' }
+							},
+							x: {
+								ticks: {
+									maxTicksLimit: 10,
+									color: '#b0b8d1'
+								},
+								grid: { color: 'rgba(176,184,209,0.15)' }
+							}
+						}
+					}
+				});
+				window.dashboardCharts.push(chart);
+			}
 		});
 	</script>
 </body>
