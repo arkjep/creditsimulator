@@ -41,9 +41,9 @@
 						<label for="edit-strategy-name" style="color:#b0b8d1;">Strategy Name</label>
 						<input type="text" id="edit-strategy-name" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<label for="edit-strategy-reserve" style="color:#b0b8d1;">% Reserve Capital to Hold</label>
-						<input type="number" id="edit-strategy-reserve" min="0" max="100" step="0.01" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;" placeholder="e.g. 10">
+						<input type="number" id="edit-strategy-reserve" min="0" max="100" step="1" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;" placeholder="e.g. 10">
 						<label for="edit-strategy-reserve-rate" style="color:#b0b8d1;">Reserve Interest Rate (%)</label>
-						<input type="number" id="edit-strategy-reserve-rate" step="0.01" style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;" placeholder="e.g. 2">
+						<input type="number" id="edit-strategy-reserve-rate" step="1" style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;" placeholder="e.g. 2">
 						<button id="edit-modal-save-strategy" class="sidebar-btn" style="margin-bottom:8px;">Save</button>
 						<button id="edit-modal-cancel-strategy" class="sidebar-btn" style="background:#444a5a;">Cancel</button>
 					</div>
@@ -67,7 +67,7 @@
 						<label for="modal-scenario-date" style="color:#b0b8d1;">Date</label>
 						<input type="date" id="modal-scenario-date" required style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<label for="modal-scenario-interest" style="color:#b0b8d1;">Interest Rate (%)</label>
-						<input type="number" id="modal-scenario-interest" step="0.01" required style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<input type="number" id="modal-scenario-interest" step="1" required style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<label for="modal-scenario-term" style="color:#b0b8d1;">Term (years)</label>
 						<input type="number" id="modal-scenario-term" required style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<button id="modal-save-scenario" class="sidebar-btn" style="margin-bottom:8px;">Save</button>
@@ -82,7 +82,7 @@
 						<!-- <label for="edit-scenario-name" style="color:#b0b8d1;">Scenario Name</label> -->
 						<!-- <input type="text" id="edit-scenario-name" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;"> -->
 						<label for="edit-scenario-interest" style="color:#b0b8d1;">Interest Rate (%)</label>
-						<input type="number" id="edit-scenario-interest" step="0.01" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<input type="number" id="edit-scenario-interest" step="1" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<label for="edit-scenario-term" style="color:#b0b8d1;">Term (years)</label>
 						<input type="number" id="edit-scenario-term" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<label for="edit-scenario-date" style="color:#b0b8d1;">Date</label>
@@ -107,486 +107,480 @@
         </main>
     </div>
 	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-	<script type="module" src="assets/js/app.js"></script>
-        <script>
-        // Dashboard operational logic for sidebar layout
-			import('./assets/js/models/loan.js').then(({ default: Loan }) => {
-				import('./assets/js/models/investment.js').then(({ default: Investment }) => {
-					// Caching logic
-					const cacheKeys = {
-						fund_return: 'creditsimulator_fund_return',
-						strategy: 'creditsimulator_investment_strategy'
-					};
-					// Restore cached values
-					// loan-amount and interest-rate removed
-					const fundReturnInput = document.getElementById('fund-return');
-					if (localStorage.getItem(cacheKeys.fund_return)) {
-						fundReturnInput.value = localStorage.getItem(cacheKeys.fund_return);
-					} else {
-						fundReturnInput.value = 40;
-					}
-					// --- STRATEGY MANAGEMENT ---
-					const STRATEGY_KEY = 'creditsimulator_strategies';
-					const strategySelect = document.getElementById('investment-strategy');
-					const addBtn = document.getElementById('add-strategy');
-					const modal = document.getElementById('strategy-modal');
-					const modalNameInput = document.getElementById('modal-strategy-name');
-					const modalSave = document.getElementById('modal-save-strategy');
-					const modalCancel = document.getElementById('modal-cancel-strategy');
-					const editBtn = document.getElementById('edit-strategy');
-					const deleteBtn = document.getElementById('delete-strategy');
-					// Create modal
-					const modalReserveInput = null;
-					const modalReserveRateInput = null;
-					// Edit modal
-					const editModal = document.getElementById('strategy-edit-modal');
-					const editModalName = document.getElementById('edit-strategy-name');
-					const editModalReserve = document.getElementById('edit-strategy-reserve');
-					const editModalReserveRate = document.getElementById('edit-strategy-reserve-rate');
-					const editModalSave = document.getElementById('edit-modal-save-strategy');
-					const editModalCancel = document.getElementById('edit-modal-cancel-strategy');
-					let editingStrategy = null;
+    <script>
+		// Caching logic
+		const cacheKeys = {
+			fund_return: 'creditsimulator_fund_return',
+			strategy: 'creditsimulator_investment_strategy'
+		};
+		// Restore cached values
+		// loan-amount and interest-rate removed
+		const fundReturnInput = document.getElementById('fund-return');
+		if (localStorage.getItem(cacheKeys.fund_return)) {
+			fundReturnInput.value = localStorage.getItem(cacheKeys.fund_return);
+		} else {
+			fundReturnInput.value = 40;
+		}
+		// --- STRATEGY MANAGEMENT ---
+		const STRATEGY_KEY = 'creditsimulator_strategies';
+		const strategySelect = document.getElementById('investment-strategy');
+		const addBtn = document.getElementById('add-strategy');
+		const modal = document.getElementById('strategy-modal');
+		const modalNameInput = document.getElementById('modal-strategy-name');
+		const modalSave = document.getElementById('modal-save-strategy');
+		const modalCancel = document.getElementById('modal-cancel-strategy');
+		const editBtn = document.getElementById('edit-strategy');
+		const deleteBtn = document.getElementById('delete-strategy');
+		// Create modal
+		const modalReserveInput = null;
+		const modalReserveRateInput = null;
+		// Edit modal
+		const editModal = document.getElementById('strategy-edit-modal');
+		const editModalName = document.getElementById('edit-strategy-name');
+		const editModalReserve = document.getElementById('edit-strategy-reserve');
+		const editModalReserveRate = document.getElementById('edit-strategy-reserve-rate');
+		const editModalSave = document.getElementById('edit-modal-save-strategy');
+		const editModalCancel = document.getElementById('edit-modal-cancel-strategy');
+		let editingStrategy = null;
 
-					function getStrategies() {
-						const raw = localStorage.getItem(STRATEGY_KEY);
-						if (!raw) return [
-							{name:'Raw', reserve:0, reserveRate:0},
-						];
-						try { return JSON.parse(raw); } catch { return []; }
-					}
-					function saveStrategies(strats) {
-						localStorage.setItem(STRATEGY_KEY, JSON.stringify(strats));
-					}
-					function refreshStrategyDropdown(selectedName) {
-						const strats = getStrategies();
-						strategySelect.innerHTML = strats.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
-						if (selectedName && strats.some(s=>s.name===selectedName)) {
-							strategySelect.value = selectedName;
-						}
-					}
-					// Initial load
-					refreshStrategyDropdown(localStorage.getItem(cacheKeys.strategy));
-					// Restore cached selection
-					if (localStorage.getItem(cacheKeys.strategy)) {
-						strategySelect.value = localStorage.getItem(cacheKeys.strategy);
-					}
-					// Save on change
-					const cacheInput = (id, key) => {
-						const el = document.getElementById(id);
-						if (el) {
-							el.addEventListener('input', e => {
-								localStorage.setItem(key, e.target.value);
-							});
-						}
-					};
-					cacheInput('fund-return', cacheKeys.fund_return);
-					strategySelect.addEventListener('change', e => {
-						localStorage.setItem(cacheKeys.strategy, e.target.value);
-					});
-
-					// Add strategy popup logic
-					addBtn.addEventListener('click', function() {
-						modal.style.display = 'flex';
-						modalNameInput.value = '';
-						setTimeout(()=>modalNameInput.focus(), 100);
-					});
-					modalCancel.addEventListener('click', function() {
-						modal.style.display = 'none';
-					});
-					modalSave.addEventListener('click', function() {
-						const name = modalNameInput.value.trim();
-						if (!name) return;
-						let strats = getStrategies();
-						if (strats.some(s => s.name === name)) {
-							alert('A strategy with this name already exists.');
-							return;
-						}
-						// Default values for new strategies
-						strats.push({name, growth: 5, reserve: 0, reserveRate: 0});
-						saveStrategies(strats);
-						refreshStrategyDropdown(name);
-						strategySelect.value = name;
-						localStorage.setItem(cacheKeys.strategy, name);
-						modal.style.display = 'none';
-					});
-					modalNameInput.addEventListener('keydown', function(e) {
-						if (e.key === 'Enter') {
-							modalSave.click();
-						}
-					});
-
-					// Edit strategy logic
-					editBtn.addEventListener('click', function() {
-						const strats = getStrategies();
-						const selected = strategySelect.value;
-						const strat = strats.find(s => s.name === selected);
-						if (strat) {
-							editingStrategy = strat.name;
-							editModalName.value = strat.name;
-							editModalReserve.value = strat.reserve ?? 0;
-							editModalReserveRate.value = strat.reserveRate ?? 0;
-							editModal.style.display = 'flex';
-							setTimeout(()=>editModalName.focus(), 100);
-						}
-					});
-					editModalCancel.addEventListener('click', function() {
-						editModal.style.display = 'none';
-						editingStrategy = null;
-					});
-					editModalSave.addEventListener('click', function() {
-						const name = editModalName.value.trim();
-						const reserve = parseFloat(editModalReserve.value);
-						const reserveRate = parseFloat(editModalReserveRate.value);
-						if (!name || isNaN(reserve) || isNaN(reserveRate)) return;
-						let strats = getStrategies();
-						// Prevent duplicate name (unless it's the same strategy)
-						if (strats.some(s => s.name === name && s.name !== editingStrategy)) {
-							alert('A strategy with this name already exists.');
-							return;
-						}
-						strats = strats.map(s => s.name === editingStrategy ? {...s, name, reserve, reserveRate} : s);
-						saveStrategies(strats);
-						refreshStrategyDropdown(name);
-						strategySelect.value = name;
-						localStorage.setItem(cacheKeys.strategy, name);
-						editModal.style.display = 'none';
-						editingStrategy = null;
-					});
-					[editModalName, editModalReserve, editModalReserveRate].forEach(input => {
-						input.addEventListener('keydown', function(e) {
-							if (e.key === 'Enter') {
-								editModalSave.click();
-							}
-						});
-					});
-					// Delete selected strategy
-					deleteBtn.addEventListener('click', function() {
-						let strats = getStrategies();
-						const selected = strategySelect.value;
-						if (!confirm('Delete strategy "' + selected + '"?')) return;
-						strats = strats.filter(s => s.name !== selected);
-						saveStrategies(strats);
-						refreshStrategyDropdown();
-						strategySelect.value = strats.length ? strats[0].name : '';
-						localStorage.setItem(cacheKeys.strategy, strategySelect.value);
-					});
-
-					// --- SCENARIO MANAGEMENT ---
-					const SCENARIO_KEY = 'creditsimulator_scenarios';
-					const scenarioSelect = document.getElementById('scenario-select');
-					const addScenarioBtn = document.getElementById('add-scenario');
-					const editScenarioBtn = document.getElementById('edit-scenario');
-					const deleteScenarioBtn = document.getElementById('delete-scenario');
-					const scenarioModal = document.getElementById('scenario-modal');
-					const scenarioModalSave = document.getElementById('modal-save-scenario');
-					const scenarioModalInterest = document.getElementById('modal-scenario-interest');
-					const scenarioModalTerm = document.getElementById('modal-scenario-term');
-					const scenarioModalDate = document.getElementById('modal-scenario-date');
-					const scenarioModalCancel = document.getElementById('modal-cancel-scenario');
-					const editScenarioModal = document.getElementById('scenario-edit-modal');
-					const editScenarioInterest = document.getElementById('edit-scenario-interest');
-					const editScenarioTerm = document.getElementById('edit-scenario-term');
-					const editScenarioModalSave = document.getElementById('edit-modal-save-scenario');
-					const editScenarioModalCancel = document.getElementById('edit-modal-cancel-scenario');
-					let editingScenario = null;
-
-					function getScenarios() {
-						const raw = localStorage.getItem(SCENARIO_KEY);
-						if (!raw) return [];
-						try { return JSON.parse(raw); } catch { return []; }
-					}
-					function saveScenarios(scenarios) {
-						localStorage.setItem(SCENARIO_KEY, JSON.stringify(scenarios));
-					}
-					function refreshScenarioDropdown(selectedName) {
-						const scenarios = getScenarios();
-						scenarioSelect.innerHTML = scenarios.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
-						if (selectedName && scenarios.some(s=>s.name===selectedName)) {
-							scenarioSelect.value = selectedName;
-						}
-					}
-					// Initial load
-					refreshScenarioDropdown();
-					// Add scenario
-					addScenarioBtn.addEventListener('click', function() {
-						scenarioModal.style.display = 'flex';
-						document.getElementById('modal-scenario-date').value = '';
-						setTimeout(()=>scenarioModalInterest.focus(), 100);
-					});
-					scenarioModalCancel.addEventListener('click', function() {
-						scenarioModal.style.display = 'none';
-					});
-					scenarioModalSave.addEventListener('click', function() {
-						// In add scenario logic, generate name from interest, term, and date
-						const interest = parseFloat(document.getElementById('modal-scenario-interest').value);
-						const term = parseInt(document.getElementById('modal-scenario-term').value);
-						const date = document.getElementById('modal-scenario-date').value;
-						if (isNaN(interest) || isNaN(term) || !date) {
-							alert('Please enter interest, term, and date.');
-							return;
-						}
-						const name = `${interest}% ${term}yr ${new Date(date + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC' })}`;
-						let scenarios = getScenarios();
-						if (scenarios.some(s => s.name === name)) {
-							alert('A scenario with these parameters already exists.');
-							return;
-						}
-						// Default values for new scenario
-						scenarios.push({name, interest, term, date});
-						saveScenarios(scenarios);
-						refreshScenarioDropdown(name);
-						scenarioSelect.value = name;
-						scenarioModal.style.display = 'none';
-					});
-					// Edit scenario
-					editScenarioBtn.addEventListener('click', function() {
-						const scenarios = getScenarios();
-						const selected = scenarioSelect.value;
-						const scenario = scenarios.find(s => s.name === selected);
-						if (scenario) {
-							editingScenario = scenario.name;
-							editScenarioInterest.value = scenario.interest;
-							editScenarioTerm.value = scenario.term;
-							document.getElementById('edit-scenario-date').value = scenario.date || '';
-							editScenarioModal.style.display = 'flex';
-							setTimeout(()=>editScenarioInterest.focus(), 100);
-						}
-					});
-					editScenarioModalCancel.addEventListener('click', function() {
-						editScenarioModal.style.display = 'none';
-						editingScenario = null;
-					});
-					editScenarioModalSave.addEventListener('click', function() {
-						// In edit scenario logic, generate name from interest, term, and date
-						const interest = parseFloat(editScenarioInterest.value);
-						const term = parseInt(editScenarioTerm.value);
-						const date = document.getElementById('edit-scenario-date').value;
-						if (isNaN(interest) || isNaN(term) || !date) {
-							alert('Please enter interest, term, and date.');
-							return;
-						}
-						const name = `${interest}% ${term}yr ${new Date(date + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC' })}`;
-						let scenarios = getScenarios();
-						if (scenarios.some(s => s.name === name && s.name !== editingScenario)) {
-							alert('A scenario with these parameters already exists.');
-							return;
-						}
-						scenarios = scenarios.map(s => s.name === editingScenario ? {...s, name, interest, term, date} : s);
-						saveScenarios(scenarios);
-						refreshScenarioDropdown(name);
-						scenarioSelect.value = name;
-						editScenarioModal.style.display = 'none';
-						editingScenario = null;
-					});
-					[editScenarioInterest, editScenarioTerm].forEach(input => {
-						input.addEventListener('keydown', function(e) {
-							if (e.key === 'Enter') editScenarioModalSave.click();
-						});
-					});
-					// Delete scenario
-					deleteScenarioBtn.addEventListener('click', function() {
-						let scenarios = getScenarios();
-						const selected = scenarioSelect.value;
-						if (!selected) return;
-						if (!confirm('Delete scenario "' + selected + '"?')) return;
-						scenarios = scenarios.filter(s => s.name !== selected);
-						saveScenarios(scenarios);
-						refreshScenarioDropdown();
-						scenarioSelect.value = scenarios.length ? scenarios[0].name : '';
-					});
-
-					document.getElementById('run-simulation').addEventListener('click', async function(e) {
-						e.preventDefault();
-						const strategyName = strategySelect.value;
-						const strategies = getStrategies();
-						const strategy = strategies.find(s => s.name === strategyName);
-						const scenarios = getScenarios();
-						const scenario = scenarios.find(s => s.name === scenarioSelect.value);
-						if (!scenario || !strategy) {
-							alert('Please select a scenario and a strategy.');
-							return;
-						}
-
-						const loadSPYData = async () => {
-							try {
-								const response = await fetch('pricehistory/SPY.json');
-								const spyData = await response.json();
-								return spyData.map(c => ({ 
-									...c, 
-									date: c.date || new Date(c.datetime * 1000).toLocaleDateString('en-CA', {
-										timeZone: 'America/New_York'
-									})
-								}));
-							} catch (error) {
-								console.error('Error loading SPY data:', error);
-								throw error;
-							}
-						};
-
-						// Generate compound interest data for the loan
-						const generateCompoundInterestData = (principal, annualRate, years, basis = 365) => {
-							const nDays = Math.round(years * basis);
-							const dailyRate = Math.pow(1 + annualRate, 1 / basis) - 1;
-							const dailyData = new Array(nDays + 1);
-							for (let day = 0; day <= nDays; day++) {
-								dailyData[day] = principal * Math.pow(1 + dailyRate, day);
-							}
-							return dailyData;
-						};
-
-						const amount = 10000;
-						const interestRate = scenario.interest / 100;
-						const term = scenario.term;
-						const fundReturn = parseFloat(document.getElementById('fund-return').value) / 100;
-					
-						// Generate data for charts
-						const spCandles = await loadSPYData();
-						const spData = spCandles.map(c => c.close);
-						const compoundInterestData = generateCompoundInterestData(amount, interestRate, term);
-
-						// // Calculate average annualized return of SPY data
-						// const calculateAnnualizedReturn = (prices) => {
-						// 	if (prices.length < 2) return 0;
-						// 	const startValue = prices[0];
-						// 	const endValue = prices[prices.length - 1];
-						// 	const totalPeriods = prices.length - 1; // Number of periods between prices
-						// 	const yearsElapsed = totalPeriods / 252; // Convert to years (252 trading days)
-
-						// 	if (yearsElapsed <= 0 || startValue <= 0) return 0;
-
-						// 	// CAGR = (Ending Value / Beginning Value)^(1/n) - 1
-						// 	const cagr = Math.pow(endValue / startValue, 1 / yearsElapsed) - 1;
-						// 	return cagr * 100; // Return as percentage
-						// };
-
-						// const spyAnnualizedReturn = calculateAnnualizedReturn(spData);
-						// console.log(`SPY Average Annualized Return: ${spyAnnualizedReturn.toFixed(2)}%`);
-
-						const spyAnnualizedReturn = 10.4; // Approximate historical average
-						
-						// Find the lowest point in spData
-						const minSpyValue = Math.min(...spData);
-						const minSpyIndex = spData.findIndex(value => value === minSpyValue);
-
-						// Calculate the drawdown percentage from start to minimum
-						const drawdownPercent = (minSpyValue - spData[0]) / spData[0];
-
-						// Generate a new compound curve that follows fundReturn but includes the market drawdown pattern
-						function adjustToTargetCAGR(spData, amount, targetCagr, basis = BASIS, volScale = 1) {
-							if (!spData || spData.length < 2) return [];
-
-							const n = spData.length;
-							const p0 = spData[0];
-							const yearsTotal = (n - 1) / basis;
-
-							// Realized SPY CAGR over the provided window (don’t hardcode 10.4%)
-							const spyCagr = Math.pow(spData[n - 1] / p0, 1 / yearsTotal) - 1;
-
-							// Work in log space for clean trend removal / reapplication
-							const spySlope = Math.log(1 + spyCagr);
-							const tgtSlope = Math.log(1 + targetCagr);
-
-							const out = new Array(n);
-							for (let i = 0; i < n; i++) {
-								const tYears = i / basis;
-
-								// Detrend SPY: shape oscillates ~1.0 and captures drawdowns/zigzags
-								// shape_t = exp( log(P_t/P0) - spySlope * t )
-								const logRel = Math.log(spData[i] / p0);
-								const shape = Math.exp((logRel - spySlope * tYears) * volScale);
-
-								// Apply target trend + shape, scaled to your starting amount
-								// out_t = amount * exp(tgtSlope * t) * shape
-								out[i] = amount * Math.exp(tgtSlope * tYears) * shape;
-							}
-
-							// Numerical drift is usually negligible; if you want a perfect terminal pin, uncomment:
-							// const desiredEnd = amount * Math.pow(1 + targetCagr, yearsTotal);
-							// const scaleFix = desiredEnd / out[n - 1];
-							// for (let i = 0; i < n; i++) out[i] *= scaleFix;
-
-							return out;
-						}
-
-						// Find the index in spCandles that matches the scenario's date
-						const scenarioStartIdx = spCandles.findIndex(c => c.date === scenario.date);
-						if (scenarioStartIdx === -1) {
-							alert('No SPY data available for the selected scenario date.');
-							return;
-						}
-						// Slice the SPY and compound data to start at the scenario date
-						const spCandlesOffset = spCandles.slice(scenarioStartIdx);
-						const spDataOffset = spData.slice(scenarioStartIdx);
-						const compoundInterestDataOffset = compoundInterestData.slice(0, spDataOffset.length);
-						const spNormalizedOffset = adjustToTargetCAGR(spDataOffset, amount, fundReturn, 252, 1);
-
-						// Results summary
-						const resultsDiv = document.getElementById('dashboard-simulation-results');
-						resultsDiv.innerHTML = ``;
-						// Chart
-						const ctx = document.getElementById('dashboard-results-chart').getContext('2d');
-						if (window.dashboardChart) window.dashboardChart.destroy();
-						window.dashboardChart = new Chart(ctx, {
-							type: 'line',
-							data: {
-								labels: compoundInterestDataOffset.map((_, i) => {
-									const date = new Date(spCandlesOffset[i]?.date);
-									return date.toLocaleDateString();
-								}),
-								datasets: [
-									{
-										label: 'Compound Interest',
-										data: compoundInterestDataOffset,
-										borderColor: 'rgba(75,192,192,1)',
-										fill: false,
-										pointRadius: 0
-									},
-									{
-										label: 'S&P 500 Adjusted',
-										data: spNormalizedOffset.slice(0, compoundInterestDataOffset.length),
-										borderColor: 'rgba(153,102,255,1)',
-										fill: false,
-										pointRadius: 0
-									}
-								]
-							},
-							options: {
-								responsive: true,
-								layout: { padding: 24 },
-								plugins: {
-									legend: {
-										position: 'top',
-										labels: { color: '#b0b8d1' }
-									},
-									title: {
-										display: false,
-										color: '#b0b8d1'
-									},
-									tooltip: {
-										bodyColor: '#b0b8d1',
-										titleColor: '#b0b8d1',
-										footerColor: '#b0b8d1'
-									}
-								},
-								scales: {
-									y: {
-										beginAtZero: true,
-										ticks: { color: '#b0b8d1' },
-										grid: { color: 'rgba(176,184,209,0.10)' }
-									},
-									x: {
-										ticks: {
-											maxTicksLimit: 10,
-											color: '#b0b8d1'
-										},
-										grid: { color: 'rgba(176,184,209,0.15)' }
-									}
-								}
-							}
-						});
-					});
+		function getStrategies() {
+			const raw = localStorage.getItem(STRATEGY_KEY);
+			if (!raw) return [
+				{name:'Raw', reserve:0, reserveRate:0},
+			];
+			try { return JSON.parse(raw); } catch { return []; }
+		}
+		function saveStrategies(strats) {
+			localStorage.setItem(STRATEGY_KEY, JSON.stringify(strats));
+		}
+		function refreshStrategyDropdown(selectedName) {
+			const strats = getStrategies();
+			strategySelect.innerHTML = strats.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+			if (selectedName && strats.some(s=>s.name===selectedName)) {
+				strategySelect.value = selectedName;
+			}
+		}
+		// Initial load
+		refreshStrategyDropdown(localStorage.getItem(cacheKeys.strategy));
+		// Restore cached selection
+		if (localStorage.getItem(cacheKeys.strategy)) {
+			strategySelect.value = localStorage.getItem(cacheKeys.strategy);
+		}
+		// Save on change
+		const cacheInput = (id, key) => {
+			const el = document.getElementById(id);
+			if (el) {
+				el.addEventListener('input', e => {
+					localStorage.setItem(key, e.target.value);
 				});
+			}
+		};
+		cacheInput('fund-return', cacheKeys.fund_return);
+		strategySelect.addEventListener('change', e => {
+			localStorage.setItem(cacheKeys.strategy, e.target.value);
+		});
+
+		// Add strategy popup logic
+		addBtn.addEventListener('click', function() {
+			modal.style.display = 'flex';
+			modalNameInput.value = '';
+			setTimeout(()=>modalNameInput.focus(), 100);
+		});
+		modalCancel.addEventListener('click', function() {
+			modal.style.display = 'none';
+		});
+		modalSave.addEventListener('click', function() {
+			const name = modalNameInput.value.trim();
+			if (!name) return;
+			let strats = getStrategies();
+			if (strats.some(s => s.name === name)) {
+				alert('A strategy with this name already exists.');
+				return;
+			}
+			// Default values for new strategies
+			strats.push({name, growth: 5, reserve: 0, reserveRate: 0});
+			saveStrategies(strats);
+			refreshStrategyDropdown(name);
+			strategySelect.value = name;
+			localStorage.setItem(cacheKeys.strategy, name);
+			modal.style.display = 'none';
+		});
+		modalNameInput.addEventListener('keydown', function(e) {
+			if (e.key === 'Enter') {
+				modalSave.click();
+			}
+		});
+
+		// Edit strategy logic
+		editBtn.addEventListener('click', function() {
+			const strats = getStrategies();
+			const selected = strategySelect.value;
+			const strat = strats.find(s => s.name === selected);
+			if (strat) {
+				editingStrategy = strat.name;
+				editModalName.value = strat.name;
+				editModalReserve.value = strat.reserve ?? 0;
+				editModalReserveRate.value = strat.reserveRate ?? 0;
+				editModal.style.display = 'flex';
+				setTimeout(()=>editModalName.focus(), 100);
+			}
+		});
+		editModalCancel.addEventListener('click', function() {
+			editModal.style.display = 'none';
+			editingStrategy = null;
+		});
+		editModalSave.addEventListener('click', function() {
+			const name = editModalName.value.trim();
+			const reserve = parseFloat(editModalReserve.value);
+			const reserveRate = parseFloat(editModalReserveRate.value);
+			if (!name || isNaN(reserve) || isNaN(reserveRate)) return;
+			let strats = getStrategies();
+			// Prevent duplicate name (unless it's the same strategy)
+			if (strats.some(s => s.name === name && s.name !== editingStrategy)) {
+				alert('A strategy with this name already exists.');
+				return;
+			}
+			strats = strats.map(s => s.name === editingStrategy ? {...s, name, reserve, reserveRate} : s);
+			saveStrategies(strats);
+			refreshStrategyDropdown(name);
+			strategySelect.value = name;
+			localStorage.setItem(cacheKeys.strategy, name);
+			editModal.style.display = 'none';
+			editingStrategy = null;
+		});
+		[editModalName, editModalReserve, editModalReserveRate].forEach(input => {
+			input.addEventListener('keydown', function(e) {
+				if (e.key === 'Enter') {
+					editModalSave.click();
+				}
 			});
-        </script>
+		});
+		// Delete selected strategy
+		deleteBtn.addEventListener('click', function() {
+			let strats = getStrategies();
+			const selected = strategySelect.value;
+			if (!confirm('Delete strategy "' + selected + '"?')) return;
+			strats = strats.filter(s => s.name !== selected);
+			saveStrategies(strats);
+			refreshStrategyDropdown();
+			strategySelect.value = strats.length ? strats[0].name : '';
+			localStorage.setItem(cacheKeys.strategy, strategySelect.value);
+		});
+
+		// --- SCENARIO MANAGEMENT ---
+		const SCENARIO_KEY = 'creditsimulator_scenarios';
+		const scenarioSelect = document.getElementById('scenario-select');
+		const addScenarioBtn = document.getElementById('add-scenario');
+		const editScenarioBtn = document.getElementById('edit-scenario');
+		const deleteScenarioBtn = document.getElementById('delete-scenario');
+		const scenarioModal = document.getElementById('scenario-modal');
+		const scenarioModalSave = document.getElementById('modal-save-scenario');
+		const scenarioModalInterest = document.getElementById('modal-scenario-interest');
+		const scenarioModalTerm = document.getElementById('modal-scenario-term');
+		const scenarioModalDate = document.getElementById('modal-scenario-date');
+		const scenarioModalCancel = document.getElementById('modal-cancel-scenario');
+		const editScenarioModal = document.getElementById('scenario-edit-modal');
+		const editScenarioInterest = document.getElementById('edit-scenario-interest');
+		const editScenarioTerm = document.getElementById('edit-scenario-term');
+		const editScenarioModalSave = document.getElementById('edit-modal-save-scenario');
+		const editScenarioModalCancel = document.getElementById('edit-modal-cancel-scenario');
+		let editingScenario = null;
+
+		function getScenarios() {
+			const raw = localStorage.getItem(SCENARIO_KEY);
+			if (!raw) return [];
+			try { return JSON.parse(raw); } catch { return []; }
+		}
+		function saveScenarios(scenarios) {
+			localStorage.setItem(SCENARIO_KEY, JSON.stringify(scenarios));
+		}
+		function refreshScenarioDropdown(selectedName) {
+			const scenarios = getScenarios();
+			scenarioSelect.innerHTML = scenarios.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+			if (selectedName && scenarios.some(s=>s.name===selectedName)) {
+				scenarioSelect.value = selectedName;
+			}
+		}
+		// Initial load
+		refreshScenarioDropdown();
+		// Add scenario
+		addScenarioBtn.addEventListener('click', function() {
+			scenarioModal.style.display = 'flex';
+			document.getElementById('modal-scenario-date').value = '';
+			setTimeout(()=>scenarioModalInterest.focus(), 100);
+		});
+		scenarioModalCancel.addEventListener('click', function() {
+			scenarioModal.style.display = 'none';
+		});
+		scenarioModalSave.addEventListener('click', function() {
+			// In add scenario logic, generate name from interest, term, and date
+			const interest = parseFloat(document.getElementById('modal-scenario-interest').value);
+			const term = parseInt(document.getElementById('modal-scenario-term').value);
+			const date = document.getElementById('modal-scenario-date').value;
+			if (isNaN(interest) || isNaN(term) || !date) {
+				alert('Please enter interest, term, and date.');
+				return;
+			}
+			const name = `${interest}% ${term}yr ${new Date(date + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC' })}`;
+			let scenarios = getScenarios();
+			if (scenarios.some(s => s.name === name)) {
+				alert('A scenario with these parameters already exists.');
+				return;
+			}
+			// Default values for new scenario
+			scenarios.push({name, interest, term, date});
+			saveScenarios(scenarios);
+			refreshScenarioDropdown(name);
+			scenarioSelect.value = name;
+			scenarioModal.style.display = 'none';
+		});
+		// Edit scenario
+		editScenarioBtn.addEventListener('click', function() {
+			const scenarios = getScenarios();
+			const selected = scenarioSelect.value;
+			const scenario = scenarios.find(s => s.name === selected);
+			if (scenario) {
+				editingScenario = scenario.name;
+				editScenarioInterest.value = scenario.interest;
+				editScenarioTerm.value = scenario.term;
+				document.getElementById('edit-scenario-date').value = scenario.date || '';
+				editScenarioModal.style.display = 'flex';
+				setTimeout(()=>editScenarioInterest.focus(), 100);
+			}
+		});
+		editScenarioModalCancel.addEventListener('click', function() {
+			editScenarioModal.style.display = 'none';
+			editingScenario = null;
+		});
+		editScenarioModalSave.addEventListener('click', function() {
+			// In edit scenario logic, generate name from interest, term, and date
+			const interest = parseFloat(editScenarioInterest.value);
+			const term = parseInt(editScenarioTerm.value);
+			const date = document.getElementById('edit-scenario-date').value;
+			if (isNaN(interest) || isNaN(term) || !date) {
+				alert('Please enter interest, term, and date.');
+				return;
+			}
+			const name = `${interest}% ${term}yr ${new Date(date + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC' })}`;
+			let scenarios = getScenarios();
+			if (scenarios.some(s => s.name === name && s.name !== editingScenario)) {
+				alert('A scenario with these parameters already exists.');
+				return;
+			}
+			scenarios = scenarios.map(s => s.name === editingScenario ? {...s, name, interest, term, date} : s);
+			saveScenarios(scenarios);
+			refreshScenarioDropdown(name);
+			scenarioSelect.value = name;
+			editScenarioModal.style.display = 'none';
+			editingScenario = null;
+		});
+		[editScenarioInterest, editScenarioTerm].forEach(input => {
+			input.addEventListener('keydown', function(e) {
+				if (e.key === 'Enter') editScenarioModalSave.click();
+			});
+		});
+		// Delete scenario
+		deleteScenarioBtn.addEventListener('click', function() {
+			let scenarios = getScenarios();
+			const selected = scenarioSelect.value;
+			if (!selected) return;
+			if (!confirm('Delete scenario "' + selected + '"?')) return;
+			scenarios = scenarios.filter(s => s.name !== selected);
+			saveScenarios(scenarios);
+			refreshScenarioDropdown();
+			scenarioSelect.value = scenarios.length ? scenarios[0].name : '';
+		});
+
+		document.getElementById('run-simulation').addEventListener('click', async function(e) {
+			e.preventDefault();
+			const strategyName = strategySelect.value;
+			const strategies = getStrategies();
+			const strategy = strategies.find(s => s.name === strategyName);
+			const scenarios = getScenarios();
+			const scenario = scenarios.find(s => s.name === scenarioSelect.value);
+			if (!scenario || !strategy) {
+				alert('Please select a scenario and a strategy.');
+				return;
+			}
+
+			const loadSPYData = async () => {
+				try {
+					const response = await fetch('pricehistory/SPY.json');
+					const spyData = await response.json();
+					return spyData.map(c => ({ 
+						...c, 
+						date: c.date || new Date(c.datetime * 1000).toLocaleDateString('en-CA', {
+							timeZone: 'America/New_York'
+						})
+					}));
+				} catch (error) {
+					console.error('Error loading SPY data:', error);
+					throw error;
+				}
+			};
+
+			// Generate compound interest data for the loan
+			const generateCompoundInterestData = (principal, annualRate, years, basis = 365) => {
+				const nDays = Math.round(years * basis);
+				const dailyRate = Math.pow(1 + annualRate, 1 / basis) - 1;
+				const dailyData = new Array(nDays + 1);
+				for (let day = 0; day <= nDays; day++) {
+					dailyData[day] = principal * Math.pow(1 + dailyRate, day);
+				}
+				return dailyData;
+			};
+
+			const amount = 10000;
+			const interestRate = scenario.interest / 100;
+			const term = scenario.term;
+			const fundReturn = parseFloat(document.getElementById('fund-return').value) / 100;
+		
+			// Generate data for charts
+			const spCandles = await loadSPYData();
+			const spData = spCandles.map(c => c.close);
+			const compoundInterestData = generateCompoundInterestData(amount, interestRate, term);
+
+			// // Calculate average annualized return of SPY data
+			// const calculateAnnualizedReturn = (prices) => {
+			// 	if (prices.length < 2) return 0;
+			// 	const startValue = prices[0];
+			// 	const endValue = prices[prices.length - 1];
+			// 	const totalPeriods = prices.length - 1; // Number of periods between prices
+			// 	const yearsElapsed = totalPeriods / 252; // Convert to years (252 trading days)
+
+			// 	if (yearsElapsed <= 0 || startValue <= 0) return 0;
+
+			// 	// CAGR = (Ending Value / Beginning Value)^(1/n) - 1
+			// 	const cagr = Math.pow(endValue / startValue, 1 / yearsElapsed) - 1;
+			// 	return cagr * 100; // Return as percentage
+			// };
+
+			// const spyAnnualizedReturn = calculateAnnualizedReturn(spData);
+			// console.log(`SPY Average Annualized Return: ${spyAnnualizedReturn.toFixed(2)}%`);
+
+			const spyAnnualizedReturn = 10.4; // Approximate historical average
+			
+			// Find the lowest point in spData
+			const minSpyValue = Math.min(...spData);
+			const minSpyIndex = spData.findIndex(value => value === minSpyValue);
+
+			// Calculate the drawdown percentage from start to minimum
+			const drawdownPercent = (minSpyValue - spData[0]) / spData[0];
+
+			// Generate a new compound curve that follows fundReturn but includes the market drawdown pattern
+			function adjustToTargetCAGR(spData, amount, targetCagr, basis = BASIS, volScale = 1) {
+				if (!spData || spData.length < 2) return [];
+
+				const n = spData.length;
+				const p0 = spData[0];
+				const yearsTotal = (n - 1) / basis;
+
+				// Realized SPY CAGR over the provided window (don’t hardcode 10.4%)
+				const spyCagr = Math.pow(spData[n - 1] / p0, 1 / yearsTotal) - 1;
+
+				// Work in log space for clean trend removal / reapplication
+				const spySlope = Math.log(1 + spyCagr);
+				const tgtSlope = Math.log(1 + targetCagr);
+
+				const out = new Array(n);
+				for (let i = 0; i < n; i++) {
+					const tYears = i / basis;
+
+					// Detrend SPY: shape oscillates ~1.0 and captures drawdowns/zigzags
+					// shape_t = exp( log(P_t/P0) - spySlope * t )
+					const logRel = Math.log(spData[i] / p0);
+					const shape = Math.exp((logRel - spySlope * tYears) * volScale);
+
+					// Apply target trend + shape, scaled to your starting amount
+					// out_t = amount * exp(tgtSlope * t) * shape
+					out[i] = amount * Math.exp(tgtSlope * tYears) * shape;
+				}
+
+				// Numerical drift is usually negligible; if you want a perfect terminal pin, uncomment:
+				// const desiredEnd = amount * Math.pow(1 + targetCagr, yearsTotal);
+				// const scaleFix = desiredEnd / out[n - 1];
+				// for (let i = 0; i < n; i++) out[i] *= scaleFix;
+
+				return out;
+			}
+
+			// Find the index in spCandles that matches the scenario's date
+			const scenarioStartIdx = spCandles.findIndex(c => c.date === scenario.date);
+			if (scenarioStartIdx === -1) {
+				alert('No SPY data available for the selected scenario date.');
+				return;
+			}
+			// Slice the SPY and compound data to start at the scenario date
+			const spCandlesOffset = spCandles.slice(scenarioStartIdx);
+			const spDataOffset = spData.slice(scenarioStartIdx);
+			const compoundInterestDataOffset = compoundInterestData.slice(0, spDataOffset.length);
+			const spNormalizedOffset = adjustToTargetCAGR(spDataOffset, amount, fundReturn, 252, 1);
+
+			// Results summary
+			const resultsDiv = document.getElementById('dashboard-simulation-results');
+			resultsDiv.innerHTML = ``;
+			// Chart
+			const ctx = document.getElementById('dashboard-results-chart').getContext('2d');
+			if (window.dashboardChart) window.dashboardChart.destroy();
+			window.dashboardChart = new Chart(ctx, {
+				type: 'line',
+				data: {
+					labels: compoundInterestDataOffset.map((_, i) => {
+						const date = new Date(spCandlesOffset[i]?.date);
+						return date.toLocaleDateString();
+					}),
+					datasets: [
+						{
+							label: 'Compound Interest',
+							data: compoundInterestDataOffset,
+							borderColor: 'rgba(75,192,192,1)',
+							fill: false,
+							pointRadius: 0
+						},
+						{
+							label: 'S&P 500 Adjusted',
+							data: spNormalizedOffset.slice(0, compoundInterestDataOffset.length),
+							borderColor: 'rgba(153,102,255,1)',
+							fill: false,
+							pointRadius: 0
+						}
+					]
+				},
+				options: {
+					responsive: true,
+					layout: { padding: 24 },
+					plugins: {
+						legend: {
+							position: 'top',
+							labels: { color: '#b0b8d1' }
+						},
+						title: {
+							display: false,
+							color: '#b0b8d1'
+						},
+						tooltip: {
+							bodyColor: '#b0b8d1',
+							titleColor: '#b0b8d1',
+							footerColor: '#b0b8d1'
+						}
+					},
+					scales: {
+						y: {
+							beginAtZero: true,
+							ticks: { color: '#b0b8d1' },
+							grid: { color: 'rgba(176,184,209,0.10)' }
+						},
+						x: {
+							ticks: {
+								maxTicksLimit: 10,
+								color: '#b0b8d1'
+							},
+							grid: { color: 'rgba(176,184,209,0.15)' }
+						}
+					}
+				}
+			});
+		});
+	</script>
 </body>
 </html>
