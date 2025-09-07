@@ -494,7 +494,29 @@
 				const spCandlesOffset = spCandles.slice(scenarioStartIdx);
 				const spDataOffset = spData.slice(scenarioStartIdx);
 				const compoundInterestDataOffset = compoundInterestData.slice(0, spDataOffset.length);
-				const spNormalizedOffset = adjustToTargetCAGR(spDataOffset, amount, fundReturn, 252, 1);
+				// Blended S&P + Reserve compounding
+				let spNormalizedOffset;
+				const reservePct = (typeof strategy.reserve === 'number' ? strategy.reserve : 0) / 100;
+				const reserveRate = (typeof strategy.reserveRate === 'number' ? strategy.reserveRate : 0) / 100;
+				if (reservePct > 0) {
+					// S&P portion
+					const spPortion = adjustToTargetCAGR(spDataOffset, amount * (1 - reservePct), fundReturn, 252, 1);
+					// Reserve portion: compound at reserveRate, or flat if 0
+					let reservePortion;
+					if (reserveRate > 0) {
+						reservePortion = [];
+						const n = spDataOffset.length;
+						for (let i = 0; i < n; i++) {
+							reservePortion[i] = amount * reservePct * Math.pow(1 + reserveRate / 252, i); // daily compounding
+						}
+					} else {
+						reservePortion = Array(spDataOffset.length).fill(amount * reservePct);
+					}
+					// Sum both portions
+					spNormalizedOffset = spPortion.map((v, i) => v + reservePortion[i]);
+				} else {
+					spNormalizedOffset = adjustToTargetCAGR(spDataOffset, amount, fundReturn, 252, 1);
+				}
 
 				// Results summary for each scenario (optional, can be expanded)
 				// Calculate analysis metrics
