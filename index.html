@@ -14,6 +14,13 @@
 				<h3>General Settings</h3>
 				<label for="fund-return">Fund Return (%)</label>
 				<input type="number" id="fund-return" step="1" required>
+				<label for="tax-rate">Tax Rate (%)</label>
+				<input type="number" id="tax-rate" step="1" min="0" max="100" required>
+				<label for="expenses">Expenses (%)</label>
+				<input type="number" id="expenses" step="1" min="0" max="100" required>
+				<label for="profit">Profit (%)</label>
+				<input type="number" id="profit" step="1" min="0" max="100" required>
+
 			</div>
             <div class="sidebar-section" id="sidebar-strategy">
 				<h3>Credit Strategy</h3>
@@ -111,15 +118,29 @@
 		// Caching logic
 		const cacheKeys = {
 			fund_return: 'creditsimulator_fund_return',
+			tax_rate: 'creditsimulator_tax_rate',
+			expenses: 'creditsimulator_expenses',
+			profit: 'creditsimulator_profit',
 			strategy: 'creditsimulator_investment_strategy'
 		};
 		// Restore cached values
-		// loan-amount and interest-rate removed
 		const fundReturnInput = document.getElementById('fund-return');
+		const taxRateInput = document.getElementById('tax-rate');
+		const expensesInput = document.getElementById('expenses');
+		const profitInput = document.getElementById('profit');
 		if (localStorage.getItem(cacheKeys.fund_return)) {
 			fundReturnInput.value = localStorage.getItem(cacheKeys.fund_return);
 		} else {
-			fundReturnInput.value = 40;
+			fundReturnInput.value = 30;
+		}
+		if (localStorage.getItem(cacheKeys.tax_rate)) {
+			taxRateInput.value = localStorage.getItem(cacheKeys.tax_rate) || 0;
+		}
+		if (localStorage.getItem(cacheKeys.expenses)) {
+			expensesInput.value = localStorage.getItem(cacheKeys.expenses) || 0;
+		}
+		if (localStorage.getItem(cacheKeys.profit)) {
+			profitInput.value = localStorage.getItem(cacheKeys.profit) || 0;
 		}
 		// --- STRATEGY MANAGEMENT ---
 		const STRATEGY_KEY = 'creditsimulator_strategies';
@@ -166,16 +187,19 @@
 		if (localStorage.getItem(cacheKeys.strategy)) {
 			strategySelect.value = localStorage.getItem(cacheKeys.strategy);
 		}
-		// Save on change
-		const cacheInput = (id, key) => {
-			const el = document.getElementById(id);
-			if (el) {
-				el.addEventListener('input', e => {
-					localStorage.setItem(key, e.target.value);
-				});
-			}
-		};
-		cacheInput('fund-return', cacheKeys.fund_return);
+		   // Save on change
+		   const cacheInput = (id, key) => {
+			   const el = document.getElementById(id);
+			   if (el) {
+				   el.addEventListener('input', e => {
+					   localStorage.setItem(key, e.target.value);
+				   });
+			   }
+		   };
+		   cacheInput('fund-return', cacheKeys.fund_return);
+		   cacheInput('tax-rate', cacheKeys.tax_rate);
+		   cacheInput('expenses', cacheKeys.expenses);
+		   cacheInput('profit', cacheKeys.profit);
 		strategySelect.addEventListener('change', e => {
 			localStorage.setItem(cacheKeys.strategy, e.target.value);
 		});
@@ -438,7 +462,12 @@
 			};
 
 			const amount = 10000;
+
 			const fundReturn = parseFloat(document.getElementById('fund-return').value) / 100;
+			const taxRate = parseFloat(document.getElementById('tax-rate').value) / 100;
+			const expensesRate = parseFloat(document.getElementById('expenses').value) / 100;
+			const profitRate = parseFloat(document.getElementById('profit').value) / 100;
+			const totalCutRate = taxRate + expensesRate + profitRate;
 
 			// Load SPY data once
 			const spCandles = await loadSPYData();
@@ -494,6 +523,7 @@
 				const spCandlesOffset = spCandles.slice(scenarioStartIdx);
 				const spDataOffset = spData.slice(scenarioStartIdx);
 				const compoundInterestDataOffset = compoundInterestData.slice(0, spDataOffset.length);
+
 				// Blended S&P + Reserve compounding
 				let spNormalizedOffset;
 				const reservePct = (typeof strategy.reserve === 'number' ? strategy.reserve : 0) / 100;
@@ -518,21 +548,26 @@
 					spNormalizedOffset = adjustToTargetCAGR(spDataOffset, amount, fundReturn, 252, 1);
 				}
 
-				// Results summary for each scenario (optional, can be expanded)
-				// Calculate analysis metrics
+				// Calculate Net Performance: subtract the compound curve using the cut rate from the S&P performance
+				// 1. Generate a compound curve using the cut rate
+				const compoundWithCut = generateCompoundInterestData(amount, totalCutRate, term).slice(0, spNormalizedOffset.length);
+				// 2. Net performance is S&P minus the cut curve
+				const netPerformance = spNormalizedOffset.map((v, i) => amount + v - compoundWithCut[i]);
+
+				// Results summary for each scenario (now using Net Performance)
 				const finalCompound = compoundInterestDataOffset[compoundInterestDataOffset.length - 1];
-				const finalFund = spNormalizedOffset[compoundInterestDataOffset.length - 1];
-				const outperformancePercent = ((finalFund - finalCompound) / finalCompound * 100).toFixed(2);
-				
-				// Calculate underwater statistics
+				const finalNet = netPerformance[compoundInterestDataOffset.length - 1];
+				const outperformancePercent = ((finalNet - finalCompound) / finalCompound * 100).toFixed(2);
+
+				// Calculate underwater statistics (using Net Performance)
 				let underwaterDays = 0;
 				let maxDrawdown = 0;
 				for (let i = 0; i < compoundInterestDataOffset.length; i++) {
 					const compound = compoundInterestDataOffset[i];
-					const fund = spNormalizedOffset[i];
-					if (fund < compound) {
+					const net = netPerformance[i];
+					if (net < compound) {
 						underwaterDays++;
-						const drawdown = (compound - fund) / compound * 100;
+						const drawdown = (compound - net) / compound * 100;
 						if (drawdown > maxDrawdown) {
 							maxDrawdown = drawdown;
 						}
@@ -556,7 +591,6 @@
 					</div>
 				`;
 				resultsDiv.appendChild(scenarioResultDiv);
-
 
 				// Create a wrapper for each chart and its stats
 				const chartWrapper = document.createElement('div');
@@ -603,6 +637,13 @@
 								label: 'S&P 500 Adjusted',
 								data: spNormalizedOffset.slice(0, compoundInterestDataOffset.length),
 								borderColor: 'rgba(153,102,255,1)',
+								fill: false,
+								pointRadius: 0
+							},
+							{
+								label: 'Net Performance',
+								data: netPerformance.slice(0, compoundInterestDataOffset.length),
+								borderColor: 'rgba(107,191,123,1)',
 								fill: false,
 								pointRadius: 0
 							}
