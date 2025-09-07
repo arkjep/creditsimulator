@@ -20,7 +20,10 @@
 				<input type="number" id="expenses" step="1" min="0" max="100" required>
 				<label for="profit">Profit (%)</label>
 				<input type="number" id="profit" step="1" min="0" max="100" required>
-
+				<label for="in-profit-only" style="display: flex; align-items: center; gap: 6px; margin-top: 8px;">
+					<input type="checkbox" id="in-profit-only">
+					<span>In-Profit Only</span>
+				</label>
 			</div>
             <div class="sidebar-section" id="sidebar-strategy">
 				<h3>Credit Strategy</h3>
@@ -121,13 +124,15 @@
 			tax_rate: 'creditsimulator_tax_rate',
 			expenses: 'creditsimulator_expenses',
 			profit: 'creditsimulator_profit',
-			strategy: 'creditsimulator_investment_strategy'
+			strategy: 'creditsimulator_investment_strategy',
+			in_profit_only: 'creditsimulator_in_profit_only',
 		};
 		// Restore cached values
 		const fundReturnInput = document.getElementById('fund-return');
 		const taxRateInput = document.getElementById('tax-rate');
 		const expensesInput = document.getElementById('expenses');
 		const profitInput = document.getElementById('profit');
+		const inProfitOnlyCheckbox = document.getElementById('in-profit-only');
 		if (localStorage.getItem(cacheKeys.fund_return)) {
 			fundReturnInput.value = localStorage.getItem(cacheKeys.fund_return);
 		} else {
@@ -142,6 +147,13 @@
 		if (localStorage.getItem(cacheKeys.profit)) {
 			profitInput.value = localStorage.getItem(cacheKeys.profit) || 0;
 		}
+		if (localStorage.getItem(cacheKeys.in_profit_only)) {
+			inProfitOnlyCheckbox.checked = localStorage.getItem(cacheKeys.in_profit_only) === 'true';
+		}
+		// Save in-profit-only checkbox state on change
+		inProfitOnlyCheckbox.addEventListener('change', function() {
+			localStorage.setItem(cacheKeys.in_profit_only, inProfitOnlyCheckbox.checked);
+		});
 		// --- STRATEGY MANAGEMENT ---
 		const STRATEGY_KEY = 'creditsimulator_strategies';
 		const strategySelect = document.getElementById('investment-strategy');
@@ -548,11 +560,33 @@
 					spNormalizedOffset = adjustToTargetCAGR(spDataOffset, amount, fundReturn, 252, 1);
 				}
 
-				// Calculate Net Performance: subtract the compound curve using the cut rate from the S&P performance
-				// 1. Generate a compound curve using the cut rate
-				const compoundWithCut = generateCompoundInterestData(amount, totalCutRate, term).slice(0, spNormalizedOffset.length);
-				// 2. Net performance is S&P minus the cut curve
-				const netPerformance = spNormalizedOffset.map((v, i) => amount + v - compoundWithCut[i]);
+				// Calculate Net Performance: taxes always compound, expenses/profit may be conditional
+				const compoundWithTax = generateCompoundInterestData(amount, taxRate, term).slice(0, spNormalizedOffset.length);
+				const compoundWithExpProfit = generateCompoundInterestData(amount, expensesRate + profitRate, term).slice(0, spNormalizedOffset.length);
+				const inProfitOnly = inProfitOnlyCheckbox.checked;
+				const netPerformance = [];
+
+				let lastNormalizedProfit = amount;
+				let profitCutIndex = 0;
+				
+				for (let i = 0; i < spNormalizedOffset.length; i++) {
+					// Tax is always subtracted as a compound curve
+					let afterTax = amount + spNormalizedOffset[i] - compoundWithTax[i];
+					let afterCut = 0;
+					if (!inProfitOnly) {
+						// Expenses/profit always compound
+						afterCut = afterTax - (compoundWithExpProfit[i] - amount);
+					} else {
+						// Only subtract expenses/profit as a percentage of gain above water (after tax)
+						afterCut = afterTax - (compoundWithExpProfit[profitCutIndex] - amount);
+
+						if (lastNormalizedProfit > compoundInterestData[i])
+							profitCutIndex++;
+					}
+
+					lastNormalizedProfit = afterCut;
+					netPerformance.push(afterCut);
+				}
 
 				// Results summary for each scenario (now using Net Performance)
 				const finalCompound = compoundInterestDataOffset[compoundInterestDataOffset.length - 1];
@@ -637,6 +671,13 @@
 								label: 'S&P 500 Adjusted',
 								data: spNormalizedOffset.slice(0, compoundInterestDataOffset.length),
 								borderColor: 'rgba(153,102,255,1)',
+								fill: false,
+								pointRadius: 0
+							},
+							{
+								label: 'After-Taxes',
+								data: spNormalizedOffset.slice(0, compoundInterestDataOffset.length).map((v, i) => amount + v - compoundWithTax[i]),
+								borderColor: 'rgba(255, 165, 50, 1)',
 								fill: false,
 								pointRadius: 0
 							},
