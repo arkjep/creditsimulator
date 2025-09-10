@@ -71,15 +71,14 @@
 				<div id="scenario-modal" style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
 					<div style="background:#232836;padding:32px 24px 24px 24px;border-radius:8px;box-shadow:0 2px 16px #000;width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:stretch;">
 						<h3 style="color:#fff;margin-top:0;">New Scenario</h3>
-						<!-- Remove scenario name input from new scenario modal -->
-						<!-- <label for="modal-scenario-name" style="color:#b0b8d1;">Scenario Name</label> -->
-						<!-- <input type="text" id="modal-scenario-name" style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;"> -->
-						<label for="modal-scenario-date" style="color:#b0b8d1;">Date</label>
-						<input type="date" id="modal-scenario-date" required style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<label for="modal-scenario-balloon" style="color:#b0b8d1;">Balloon Rate (%)</label>
+						<input type="number" id="modal-scenario-balloon" step="1" required style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<label for="modal-scenario-interest" style="color:#b0b8d1;">Interest Rate (%)</label>
 						<input type="number" id="modal-scenario-interest" step="1" required style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<label for="modal-scenario-term" style="color:#b0b8d1;">Term (years)</label>
-						<input type="number" id="modal-scenario-term" required style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<input type="number" id="modal-scenario-term" required style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<label for="modal-scenario-date" style="color:#b0b8d1;">Date</label>
+						<input type="date" id="modal-scenario-date" required style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<button id="modal-save-scenario" class="sidebar-btn" style="margin-bottom:8px;">Save</button>
 						<button id="modal-cancel-scenario" class="sidebar-btn" style="background:#444a5a;">Cancel</button>
 					</div>
@@ -88,9 +87,8 @@
 				<div id="scenario-edit-modal" style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
 					<div style="background:#232836;padding:32px 24px 24px 24px;border-radius:8px;box-shadow:0 2px 16px #000;width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:stretch;">
 						<h3 style="color:#fff;margin-top:0;">Edit Scenario</h3>
-						<!-- Remove scenario name input from edit scenario modal -->
-						<!-- <label for="edit-scenario-name" style="color:#b0b8d1;">Scenario Name</label> -->
-						<!-- <input type="text" id="edit-scenario-name" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;"> -->
+						<label for="edit-scenario-balloon" style="color:#b0b8d1;">Balloon Rate (%)</label>
+						<input type="number" id="edit-scenario-balloon" step="1" style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<label for="edit-scenario-interest" style="color:#b0b8d1;">Interest Rate (%)</label>
 						<input type="number" id="edit-scenario-interest" step="1" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<label for="edit-scenario-term" style="color:#b0b8d1;">Term (years)</label>
@@ -314,10 +312,12 @@
 		const scenarioModalInterest = document.getElementById('modal-scenario-interest');
 		const scenarioModalTerm = document.getElementById('modal-scenario-term');
 		const scenarioModalDate = document.getElementById('modal-scenario-date');
+		const scenarioModalBalloon = document.getElementById('modal-scenario-balloon');
 		const scenarioModalCancel = document.getElementById('modal-cancel-scenario');
 		const editScenarioModal = document.getElementById('scenario-edit-modal');
 		const editScenarioInterest = document.getElementById('edit-scenario-interest');
 		const editScenarioTerm = document.getElementById('edit-scenario-term');
+		const editScenarioBalloon = document.getElementById('edit-scenario-balloon');
 		const editScenarioModalSave = document.getElementById('edit-modal-save-scenario');
 		const editScenarioModalCancel = document.getElementById('edit-modal-cancel-scenario');
 		let editingScenario = null;
@@ -343,28 +343,29 @@
 		addScenarioBtn.addEventListener('click', function() {
 			scenarioModal.style.display = 'flex';
 			document.getElementById('modal-scenario-date').value = '';
+			scenarioModalBalloon.value = '';
 			setTimeout(()=>scenarioModalInterest.focus(), 100);
 		});
 		scenarioModalCancel.addEventListener('click', function() {
 			scenarioModal.style.display = 'none';
 		});
 		scenarioModalSave.addEventListener('click', function() {
-			// In add scenario logic, generate name from interest, term, and date
 			const interest = parseFloat(document.getElementById('modal-scenario-interest').value);
 			const term = parseInt(document.getElementById('modal-scenario-term').value);
 			const date = document.getElementById('modal-scenario-date').value;
-			if (isNaN(interest) || isNaN(term) || !date) {
-				alert('Please enter interest, term, and date.');
+			const balloon = parseFloat(scenarioModalBalloon.value);
+			if (isNaN(interest) || isNaN(term) || !date || isNaN(balloon)) {
+				alert('Please enter interest, term, date, and balloon rate.');
 				return;
 			}
-			const name = `${interest}% ${term}yr ${new Date(date + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC' })}`;
+			const name = `${interest + balloon}% ${term}yr ${new Date(date + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC' })}`;
 			let scenarios = getScenarios();
 			if (scenarios.some(s => s.name === name)) {
 				alert('A scenario with these parameters already exists.');
 				return;
 			}
 			// Default values for new scenario
-			scenarios.push({name, interest, term, date});
+			scenarios.push({name, interest, term, date, balloon});
 			saveScenarios(scenarios);
 			refreshScenarioDropdown(name);
 			scenarioSelect.value = name;
@@ -380,6 +381,7 @@
 				editScenarioInterest.value = scenario.interest;
 				editScenarioTerm.value = scenario.term;
 				document.getElementById('edit-scenario-date').value = scenario.date || '';
+				editScenarioBalloon.value = scenario.balloon ?? '';
 				editScenarioModal.style.display = 'flex';
 				setTimeout(()=>editScenarioInterest.focus(), 100);
 			}
@@ -389,22 +391,22 @@
 			editingScenario = null;
 		});
 		editScenarioModalSave.addEventListener('click', function() {
-			// In edit scenario logic, generate name from interest, term, and date
 			const interest = parseFloat(editScenarioInterest.value);
 			const term = parseInt(editScenarioTerm.value);
 			const date = document.getElementById('edit-scenario-date').value;
-			if (isNaN(interest) || isNaN(term) || !date) {
-				alert('Please enter interest, term, and date.');
+			const balloon = parseFloat(editScenarioBalloon.value);
+			if (isNaN(interest) || isNaN(term) || !date || isNaN(balloon)) {
+				alert('Please enter interest, term, date, and balloon rate.');
 				return;
 			}
-			const name = `${interest}% ${term}yr ${new Date(date + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC' })}`;
+			const name = `${interest + balloon}% ${term}yr ${new Date(date + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC' })}`;
 			let scenarios = getScenarios();
 			// Prevent duplicate name (unless it's the same scenario)
 			if (scenarios.some(s => s.name === name && s.name !== editingScenario)) {
 				alert('A scenario with these parameters already exists.');
 				return;
 			}
-			scenarios = scenarios.map(s => s.name === editingScenario ? {...s, name, interest, term, date} : s);
+			scenarios = scenarios.map(s => s.name === editingScenario ? {...s, name, interest, term, date, balloon} : s);
 			saveScenarios(scenarios);
 			refreshScenarioDropdown(name);
 			scenarioSelect.value = name;
@@ -499,8 +501,9 @@
 			// For each scenario, run simulation and create chart
 			for (const scenario of scenarios) {
 				const interestRate = scenario.interest / 100;
+				const balloonRate = scenario.balloon / 100;
 				const term = scenario.term;
-				const compoundInterestData = generateCompoundInterestData(amount, interestRate, term);
+				const compoundInterestData = generateCompoundInterestData(amount, balloonRate, term);
 
 				// Generate a new compound curve that follows fundReturn but includes the market drawdown pattern
 				function adjustToTargetCAGR(spData, amount, targetCagr, basis = 252, volScale = 1) {
@@ -638,6 +641,7 @@
 				statsDiv.style.fontSize = '1.08em';
 				statsDiv.style.color = '#b0b8d1';
 				statsDiv.innerHTML = `
+					Balloon: <b>${scenario.balloon}%</b> &nbsp;|
 					Interest: <b>${scenario.interest}%</b> &nbsp;|
 					Term: <b>${scenario.term} yr</b> &nbsp;|
 					Start Date: <b>${scenario.date}</b>
@@ -661,7 +665,7 @@
 						}),
 						datasets: [
 							{
-								label: 'Compound Interest',
+								label: 'Balloon Interest',
 								data: compoundInterestDataOffset,
 								borderColor: 'rgba(75,192,192,1)',
 								fill: false,
