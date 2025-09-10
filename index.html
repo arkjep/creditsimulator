@@ -579,30 +579,89 @@
 					paidInterestData.push(spValue - paidInterestOffset);
 				}
 
-				// Calculate Net Performance: taxes always compound, expenses/profit may be conditional
-				const compoundWithTax = generateCompoundInterestData(amount, taxRate, term).slice(0, spNormalizedOffset.length);
-				const compoundWithExpProfit = generateCompoundInterestData(amount, expensesRate + profitRate, term).slice(0, spNormalizedOffset.length);
+				// Helper to calculate after-tax curve with NOL (Net Operating Loss) rules
+				function calculateAfterTaxWithNOL(performanceCurve, principal, annualTaxRate, dateArray) {
+					const afterTaxCurve = [];
+					let lastValue = principal;
+					let accumulatedNOL = 0; // Net Operating Loss carried forward
+					let cumulativeTaxPaid = 0; // Track total tax paid permanently
+
+					function isYearEnd(idx) {
+						if (idx === 0) return false;
+						const prevDate = new Date(dateArray[idx - 1]);
+						const currDate = new Date(dateArray[idx]);
+						return currDate.getFullYear() !== prevDate.getFullYear();
+					}
+
+					for (let i = 0; i < performanceCurve.length; i++) {
+						const currentValue = performanceCurve[i];
+						let afterTaxValue = currentValue - cumulativeTaxPaid;
+
+						// Only calculate tax at year-end (when year changes)
+						if (i > 0 && isYearEnd(i)) {
+							const yearProfit = currentValue - lastValue;
+
+							if (yearProfit > 0) {
+								// If there is NOL, use it to offset profit
+								if (accumulatedNOL < 0) {
+									const profitAfterNOL = yearProfit + accumulatedNOL;
+									if (profitAfterNOL > 0) {
+										// NOL fully used up, tax only the profit above NOL
+										const taxable = profitAfterNOL;
+										const tax = taxable * annualTaxRate;
+										cumulativeTaxPaid += tax;
+										afterTaxValue = currentValue - cumulativeTaxPaid;
+										accumulatedNOL = 0;
+									} else {
+										// Still in NOL, no tax
+										accumulatedNOL += yearProfit;
+									}
+								} else {
+									// No NOL, tax full profit
+									const tax = yearProfit * annualTaxRate;
+									cumulativeTaxPaid += tax;
+									afterTaxValue = currentValue - cumulativeTaxPaid;
+								}
+							} else {
+								// Loss: accumulate NOL
+								accumulatedNOL += yearProfit;
+							}
+							lastValue = currentValue;
+						}
+						afterTaxCurve.push(afterTaxValue);
+					}
+					return afterTaxCurve;
+				}
+
+				// Calculate after-tax curve using NOL rules (on paidInterestData, i.e. after interest is paid out)
+				const afterTaxCurve = calculateAfterTaxWithNOL(
+					paidInterestData,
+					amount,
+					taxRate,
+					compoundInterestDataOffset.map((_, i) => spCandlesOffset[i]?.date)
+				);
+
+				// Calculate Net Performance: expenses/profit may be conditional
+				const compoundWithExpProfit = generateCompoundInterestData(amount, expensesRate + profitRate, term).slice(0, paidInterestData.length);
 				const inProfitOnly = inProfitOnlyCheckbox.checked;
 				const profits = [];
 				const netPerformance = [];
 
 				let lastNormalizedProfit = amount;
 				let profitCutIndex = 0;
-				
-				for (let i = 0; i < compoundInterestDataOffset.length; i++) {
-					// Tax is always subtracted as a compound curve
-					let afterTax = amount + paidInterestData[i] - compoundWithTax[i];
+
+				for (let i = 0; i < paidInterestData.length; i++) {
 					let afterCut = 0;
 					let profit = 0;
 
 					if (!inProfitOnly) {
 						// Expenses/profit always compound
 						profit = compoundWithExpProfit[i] - amount;
-						afterCut = afterTax - profit;
+						afterCut = afterTaxCurve[i] - profit;
 					} else {
 						// Only subtract expenses/profit as a percentage of gain above water (after tax)
 						profit = compoundWithExpProfit[profitCutIndex] - amount;
-						afterCut = afterTax - profit;
+						afterCut = afterTaxCurve[i] - profit;
 
 						if (lastNormalizedProfit > compoundInterestData[i])
 							profitCutIndex++;
@@ -709,7 +768,7 @@
 							},
 							{
 								label: 'After-Tax',
-								data: spNormalizedOffset.slice(0, compoundInterestDataOffset.length).map((v, i) => amount + v - compoundWithTax[i]),
+								data: afterTaxCurve,
 								borderColor: 'rgba(255, 165, 50, 1)',
 								fill: false,
 								pointRadius: 0
