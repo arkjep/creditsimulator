@@ -563,31 +563,53 @@
 					spNormalizedOffset = adjustToTargetCAGR(spDataOffset, amount, fundReturn, 252, 1);
 				}
 
+				// Calculate offset between fund performance and paid interest
+				const paidInterestData = [];
+				let paidInterestOffset = 0;
+
+				for (let i = 0; i < compoundInterestDataOffset.length; i++) {
+					const spValue = spNormalizedOffset[i];
+					
+					// If end-of-year, add paid interest to offset
+					if (i > 0 && i % 252 === 0) {
+						const interestPaid = amount * interestRate;
+						paidInterestOffset += interestPaid;
+					}
+
+					paidInterestData.push(spValue - paidInterestOffset);
+				}
+
 				// Calculate Net Performance: taxes always compound, expenses/profit may be conditional
 				const compoundWithTax = generateCompoundInterestData(amount, taxRate, term).slice(0, spNormalizedOffset.length);
 				const compoundWithExpProfit = generateCompoundInterestData(amount, expensesRate + profitRate, term).slice(0, spNormalizedOffset.length);
 				const inProfitOnly = inProfitOnlyCheckbox.checked;
+				const profits = [];
 				const netPerformance = [];
 
 				let lastNormalizedProfit = amount;
 				let profitCutIndex = 0;
 				
-				for (let i = 0; i < spNormalizedOffset.length; i++) {
+				for (let i = 0; i < compoundInterestDataOffset.length; i++) {
 					// Tax is always subtracted as a compound curve
-					let afterTax = amount + spNormalizedOffset[i] - compoundWithTax[i];
+					let afterTax = amount + paidInterestData[i] - compoundWithTax[i];
 					let afterCut = 0;
+					let profit = 0;
+
 					if (!inProfitOnly) {
 						// Expenses/profit always compound
-						afterCut = afterTax - (compoundWithExpProfit[i] - amount);
+						profit = compoundWithExpProfit[i] - amount;
+						afterCut = afterTax - profit;
 					} else {
 						// Only subtract expenses/profit as a percentage of gain above water (after tax)
-						afterCut = afterTax - (compoundWithExpProfit[profitCutIndex] - amount);
+						profit = compoundWithExpProfit[profitCutIndex] - amount;
+						afterCut = afterTax - profit;
 
 						if (lastNormalizedProfit > compoundInterestData[i])
 							profitCutIndex++;
 					}
 
 					lastNormalizedProfit = afterCut;
+					profits.push(profit);
 					netPerformance.push(afterCut);
 				}
 
@@ -665,28 +687,35 @@
 						}),
 						datasets: [
 							{
-								label: 'Balloon Interest',
+								label: 'Balloon',
 								data: compoundInterestDataOffset,
 								borderColor: 'rgba(75,192,192,1)',
 								fill: false,
 								pointRadius: 0
 							},
 							{
-								label: 'S&P 500 Adjusted',
+								label: 'Performance',
 								data: spNormalizedOffset.slice(0, compoundInterestDataOffset.length),
 								borderColor: 'rgba(153,102,255,1)',
 								fill: false,
 								pointRadius: 0
 							},
 							{
-								label: 'After-Taxes',
+								label: 'After-Interest',
+								data: paidInterestData,
+								borderColor: 'rgba(255,99,132,1)',
+								fill: false,
+								pointRadius: 0
+							},
+							{
+								label: 'After-Tax',
 								data: spNormalizedOffset.slice(0, compoundInterestDataOffset.length).map((v, i) => amount + v - compoundWithTax[i]),
 								borderColor: 'rgba(255, 165, 50, 1)',
 								fill: false,
 								pointRadius: 0
 							},
 							{
-								label: 'Net Performance',
+								label: 'Net',
 								data: netPerformance.slice(0, compoundInterestDataOffset.length),
 								borderColor: 'rgba(107,191,123,1)',
 								fill: false,
@@ -694,11 +723,8 @@
 							},
 							{
 								label: 'Profit',
-								data: spNormalizedOffset.slice(0, compoundInterestDataOffset.length).map((v, i) => {
-									const afterTax = amount + v - compoundWithTax[i];
-									return afterTax - netPerformance[i];
-								}),
-								borderColor: 'rgba(255, 193, 7, 1)', // amber
+								data: profits.slice(0, compoundInterestDataOffset.length),
+								borderColor: 'rgba(255, 193, 7, 1)',
 								fill: false,
 								pointRadius: 0
 							}
