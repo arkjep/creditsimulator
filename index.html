@@ -566,14 +566,20 @@
 				// Calculate offset between fund performance and paid interest
 				const paidInterestData = [];
 				let paidInterestOffset = 0;
+				let currentLoanValue = amount; // Track the current loan value
 
 				for (let i = 0; i < compoundInterestDataOffset.length; i++) {
 					const spValue = spNormalizedOffset[i];
 					
-					// If end-of-year, add paid interest to offset
+					// If end-of-year, calculate interest on current loan value and update loan value
 					if (i > 0 && i % 252 === 0) {
-						const interestPaid = amount * interestRate;
+						// Interest paid in cash is based on current loan value (balloon amount from prior year)
+						const interestPaid = currentLoanValue * interestRate;
 						paidInterestOffset += interestPaid;
+						
+						// Update current loan value to match the balloon compound interest at this point
+						// This represents the new principal for next year's interest calculation
+						currentLoanValue = compoundInterestDataOffset[i];
 					}
 
 					paidInterestData.push(spValue - paidInterestOffset);
