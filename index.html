@@ -9,22 +9,33 @@
 <body>
     <div class="dashboard-layout">
         <aside class="sidebar">
-			<button id="run-simulation" class="sidebar-btn" style="margin-bottom:18px;width:100%;font-size:1.1em;">Run Simulation</button>
-			<div class="sidebar-section" id="sidebar-general">
-				<h3>General Settings</h3>
-				<label for="fund-return">Fund Return (%)</label>
-				<input type="number" id="fund-return" step="1" required>
-				<label for="tax-rate">Tax Rate (%)</label>
-				<input type="number" id="tax-rate" step="1" min="0" max="100" required>
-				<label for="expenses">Expenses (%)</label>
-				<input type="number" id="expenses" step="1" min="0" max="100" required>
-				<label for="profit">Profit (%)</label>
-				<input type="number" id="profit" step="1" min="0" max="100" required>
-				<label for="in-profit-only" style="display: flex; align-items: center; gap: 6px; margin-top: 8px;">
-					<input type="checkbox" id="in-profit-only">
-					<span>In-Profit Only</span>
-				</label>
-			</div>
+            <button id="run-simulation" class="sidebar-btn" style="margin-bottom:18px;width:100%;font-size:1.1em;">Run Simulation</button>
+            
+            <!-- Import/Export Section -->
+            <div class="sidebar-section" id="sidebar-import-export">
+                <h3>Import/Export</h3>
+                <div style="display:flex;gap:6px;margin-bottom:12px;">
+                    <button id="export-data" type="button" class="sidebar-btn" style="background:#7183be;padding:4px 10px;font-size:0.95em;flex:1;">Export</button>
+                    <button id="import-data" type="button" class="sidebar-btn" style="background:#6bbf7b;padding:4px 10px;font-size:0.95em;flex:1;">Import</button>
+                </div>
+                <input type="file" id="file-input" accept=".json" style="display:none;">
+            </div>
+            
+            <div class="sidebar-section" id="sidebar-general">
+                <h3>General Settings</h3>
+                <label for="fund-return">Fund Return (%)</label>
+                <input type="number" id="fund-return" step="1" required>
+                <label for="tax-rate">Tax Rate (%)</label>
+                <input type="number" id="tax-rate" step="1" min="0" max="100" required>
+                <label for="expenses">Expenses (%)</label>
+                <input type="number" id="expenses" step="1" min="0" max="100" required>
+                <label for="profit">Profit (%)</label>
+                <input type="number" id="profit" step="1" min="0" max="100" required>
+                <label for="in-profit-only" style="display: flex; align-items: center; gap: 6px; margin-top: 8px;">
+                    <input type="checkbox" id="in-profit-only">
+                    <span>In-Profit Only</span>
+                </label>
+            </div>
             <div class="sidebar-section" id="sidebar-strategy">
 				<h3>Credit Strategy</h3>
 				<select id="investment-strategy"></select>
@@ -101,7 +112,7 @@
 				</div>
 			</div>
         </aside>
-		<main class="main-area">
+        <main class="main-area">
 			<header>
 				<!-- <h1>Credit Risk Simulator Dashboard</h1> -->
 			</header>
@@ -114,45 +125,151 @@
 			</footer>
 		</main>
     </div>
-	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
-		// Caching logic
-		const cacheKeys = {
-			fund_return: 'creditsimulator_fund_return',
-			tax_rate: 'creditsimulator_tax_rate',
-			expenses: 'creditsimulator_expenses',
-			profit: 'creditsimulator_profit',
-			strategy: 'creditsimulator_investment_strategy',
-			in_profit_only: 'creditsimulator_in_profit_only',
-		};
-		// Restore cached values
-		const fundReturnInput = document.getElementById('fund-return');
-		const taxRateInput = document.getElementById('tax-rate');
-		const expensesInput = document.getElementById('expenses');
-		const profitInput = document.getElementById('profit');
-		const inProfitOnlyCheckbox = document.getElementById('in-profit-only');
-		if (localStorage.getItem(cacheKeys.fund_return)) {
-			fundReturnInput.value = localStorage.getItem(cacheKeys.fund_return);
-		} else {
-			fundReturnInput.value = 30;
-		}
-		if (localStorage.getItem(cacheKeys.tax_rate)) {
-			taxRateInput.value = localStorage.getItem(cacheKeys.tax_rate) || 0;
-		}
-		if (localStorage.getItem(cacheKeys.expenses)) {
-			expensesInput.value = localStorage.getItem(cacheKeys.expenses) || 0;
-		}
-		if (localStorage.getItem(cacheKeys.profit)) {
-			profitInput.value = localStorage.getItem(cacheKeys.profit) || 0;
-		}
-		if (localStorage.getItem(cacheKeys.in_profit_only)) {
-			inProfitOnlyCheckbox.checked = localStorage.getItem(cacheKeys.in_profit_only) === 'true';
-		}
-		// Save in-profit-only checkbox state on change
-		inProfitOnlyCheckbox.addEventListener('change', function() {
-			localStorage.setItem(cacheKeys.in_profit_only, inProfitOnlyCheckbox.checked);
-		});
-		// --- STRATEGY MANAGEMENT ---
+        // Caching logic
+        const cacheKeys = {
+            fund_return: 'creditsimulator_fund_return',
+            tax_rate: 'creditsimulator_tax_rate',
+            expenses: 'creditsimulator_expenses',
+            profit: 'creditsimulator_profit',
+            strategy: 'creditsimulator_investment_strategy',
+            in_profit_only: 'creditsimulator_in_profit_only',
+        };
+
+        // Import/Export functionality
+        const exportBtn = document.getElementById('export-data');
+        const importBtn = document.getElementById('import-data');
+        const fileInput = document.getElementById('file-input');
+
+        // Export all data to JSON file
+        exportBtn.addEventListener('click', function() {
+            const data = {
+                version: '1.0',
+                timestamp: new Date().toISOString(),
+                settings: {
+                    fundReturn: parseFloat(document.getElementById('fund-return').value) || 30,
+                    taxRate: parseFloat(document.getElementById('tax-rate').value) || 0,
+                    expenses: parseFloat(document.getElementById('expenses').value) || 0,
+                    profit: parseFloat(document.getElementById('profit').value) || 0,
+                    inProfitOnly: document.getElementById('in-profit-only').checked,
+                    selectedStrategy: document.getElementById('investment-strategy').value,
+                    selectedScenario: document.getElementById('scenario-select').value
+                },
+                strategies: getStrategies(),
+                scenarios: getScenarios()
+            };
+
+            const jsonString = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `credit-simulator-export-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // Import data from JSON file
+        importBtn.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    // Validate data structure
+                    if (!data.version || !data.settings || !data.strategies || !data.scenarios) {
+                        throw new Error('Invalid file format');
+                    }
+
+                    // Confirm import
+                    if (!confirm(`Import data from ${data.timestamp ? new Date(data.timestamp).toLocaleString() : 'unknown date'}?\n\nThis will replace all current settings, strategies, and scenarios.`)) {
+                        return;
+                    }
+
+                    // Import settings
+                    const settings = data.settings;
+                    document.getElementById('fund-return').value = settings.fundReturn || 30;
+                    document.getElementById('tax-rate').value = settings.taxRate || 0;
+                    document.getElementById('expenses').value = settings.expenses || 0;
+                    document.getElementById('profit').value = settings.profit || 0;
+                    document.getElementById('in-profit-only').checked = settings.inProfitOnly || false;
+
+                    // Save settings to localStorage
+                    localStorage.setItem(cacheKeys.fund_return, settings.fundReturn || 30);
+                    localStorage.setItem(cacheKeys.tax_rate, settings.taxRate || 0);
+                    localStorage.setItem(cacheKeys.expenses, settings.expenses || 0);
+                    localStorage.setItem(cacheKeys.profit, settings.profit || 0);
+                    localStorage.setItem(cacheKeys.in_profit_only, settings.inProfitOnly || false);
+
+                    // Import strategies
+                    if (Array.isArray(data.strategies)) {
+                        saveStrategies(data.strategies);
+                        refreshStrategyDropdown(settings.selectedStrategy);
+                        if (settings.selectedStrategy && data.strategies.some(s => s.name === settings.selectedStrategy)) {
+                            document.getElementById('investment-strategy').value = settings.selectedStrategy;
+                            localStorage.setItem(cacheKeys.strategy, settings.selectedStrategy);
+                        }
+                    }
+
+                    // Import scenarios
+                    if (Array.isArray(data.scenarios)) {
+                        saveScenarios(data.scenarios);
+                        refreshScenarioDropdown(settings.selectedScenario);
+                        if (settings.selectedScenario && data.scenarios.some(s => s.name === settings.selectedScenario)) {
+                            document.getElementById('scenario-select').value = settings.selectedScenario;
+                        }
+                    }
+
+                    alert('Data imported successfully!');
+                } catch (error) {
+                    alert('Error importing file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+            
+            // Clear the file input
+            e.target.value = '';
+        });
+
+        // Restore cached values
+        const fundReturnInput = document.getElementById('fund-return');
+        const taxRateInput = document.getElementById('tax-rate');
+        const expensesInput = document.getElementById('expenses');
+        const profitInput = document.getElementById('profit');
+        const inProfitOnlyCheckbox = document.getElementById('in-profit-only');
+        if (localStorage.getItem(cacheKeys.fund_return)) {
+            fundReturnInput.value = localStorage.getItem(cacheKeys.fund_return);
+        } else {
+            fundReturnInput.value = 30;
+        }
+        if (localStorage.getItem(cacheKeys.tax_rate)) {
+            taxRateInput.value = localStorage.getItem(cacheKeys.tax_rate) || 0;
+        }
+        if (localStorage.getItem(cacheKeys.expenses)) {
+            expensesInput.value = localStorage.getItem(cacheKeys.expenses) || 0;
+        }
+        if (localStorage.getItem(cacheKeys.profit)) {
+            profitInput.value = localStorage.getItem(cacheKeys.profit) || 0;
+        }
+        if (localStorage.getItem(cacheKeys.in_profit_only)) {
+            inProfitOnlyCheckbox.checked = localStorage.getItem(cacheKeys.in_profit_only) === 'true';
+        }
+        // Save in-profit-only checkbox state on change
+        inProfitOnlyCheckbox.addEventListener('change', function() {
+            localStorage.setItem(cacheKeys.in_profit_only, inProfitOnlyCheckbox.checked);
+        });
+        // --- STRATEGY MANAGEMENT ---
 		const STRATEGY_KEY = 'creditsimulator_strategies';
 		const strategySelect = document.getElementById('investment-strategy');
 		const addBtn = document.getElementById('add-strategy');
