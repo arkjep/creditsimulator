@@ -475,12 +475,19 @@
 				alert('Please enter interest, term, date, and balloon rate.');
 				return;
 			}
-			const name = `${interest + balloon}% ${term}yr ${new Date(date + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC' })}`;
+			
+			// Generate base name
+			const baseName = `${interest + balloon}% ${term}yr ${new Date(date + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC' })}`;
 			let scenarios = getScenarios();
-			if (scenarios.some(s => s.name === name)) {
-				alert('A scenario with these parameters already exists.');
-				return;
+			
+			// Find a unique name by adding a counter if needed
+			let name = baseName;
+			let counter = 1;
+			while (scenarios.some(s => s.name === name)) {
+				name = `${baseName} (${counter})`;
+				counter++;
 			}
+			
 			// Default values for new scenario
 			scenarios.push({name, interest, term, date, balloon});
 			saveScenarios(scenarios);
@@ -516,13 +523,19 @@
 				alert('Please enter interest, term, date, and balloon rate.');
 				return;
 			}
-			const name = `${interest + balloon}% ${term}yr ${new Date(date + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC' })}`;
+			
+			// Generate base name
+			const baseName = `${interest + balloon}% ${term}yr ${new Date(date + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC' })}`;
 			let scenarios = getScenarios();
-			// Prevent duplicate name (unless it's the same scenario)
-			if (scenarios.some(s => s.name === name && s.name !== editingScenario)) {
-				alert('A scenario with these parameters already exists.');
-				return;
+			
+			// Find a unique name by adding a counter if needed (excluding the scenario being edited)
+			let name = baseName;
+			let counter = 1;
+			while (scenarios.some(s => s.name === name && s.name !== editingScenario)) {
+				name = `${baseName} (${counter})`;
+				counter++;
 			}
+			
 			scenarios = scenarios.map(s => s.name === editingScenario ? {...s, name, interest, term, date, balloon} : s);
 			saveScenarios(scenarios);
 			refreshScenarioDropdown(name);
