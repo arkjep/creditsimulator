@@ -1,72 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Credit Risk Simulator</title>
-    <link rel="stylesheet" href="assets/css/main.css">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Credit Risk Simulator</title>
+	<link rel="stylesheet" href="assets/css/main.css">
 </head>
+
 <body>
-    <div class="dashboard-layout">
-        <aside class="sidebar">
-            <button id="run-simulation" class="sidebar-btn" style="margin-bottom:18px;width:100%;font-size:1.1em;">Run Simulation</button>
-            
-            <!-- Import/Export Section -->
-            <div class="sidebar-section" id="sidebar-import-export">
-                <h3>Import/Export</h3>
-                <div style="display:flex;gap:6px;margin-bottom:12px;">
-                    <button id="export-data" type="button" class="sidebar-btn" style="background:#7183be;padding:4px 10px;font-size:0.95em;flex:1;">Export</button>
-                    <button id="import-data" type="button" class="sidebar-btn" style="background:#6bbf7b;padding:4px 10px;font-size:0.95em;flex:1;">Import</button>
-                </div>
-                <input type="file" id="file-input" accept=".json" style="display:none;">
-            </div>
-            
-            <div class="sidebar-section" id="sidebar-general">
-                <h3>General Settings</h3>
-                <label for="fund-return">Fund Return (%)</label>
-                <input type="number" id="fund-return" step="1" required>
-                <label for="tax-rate">Tax Rate (%)</label>
-                <input type="number" id="tax-rate" step="1" min="0" max="100" required>
-                <label for="expenses">Expenses (%)</label>
-                <input type="number" id="expenses" step="1" min="0" max="100" required>
-                <label for="profit">Profit (%)</label>
-                <input type="number" id="profit" step="1" min="0" max="100" required>
-                <label for="in-profit-only" style="display: flex; align-items: center; gap: 6px; margin-top: 8px;">
-                    <input type="checkbox" id="in-profit-only">
-                    <span>In-Profit Only</span>
-                </label>
-            </div>
-            <div class="sidebar-section" id="sidebar-strategy">
+	<div class="dashboard-layout">
+		<aside class="sidebar">
+			<button id="run-simulation" class="sidebar-btn" style="margin-bottom:18px;width:100%;font-size:1.1em;">Run
+				Simulation</button>
+
+			<!-- Import/Export Section -->
+			<div class="sidebar-section" id="sidebar-import-export">
+				<h3>Import/Export</h3>
+				<div style="display:flex;gap:6px;margin-bottom:12px;">
+					<button id="export-data" type="button" class="sidebar-btn"
+						style="background:#7183be;padding:4px 10px;font-size:0.95em;flex:1;">Export</button>
+					<button id="import-data" type="button" class="sidebar-btn"
+						style="background:#6bbf7b;padding:4px 10px;font-size:0.95em;flex:1;">Import</button>
+				</div>
+				<input type="file" id="file-input" accept=".json" style="display:none;">
+			</div>
+
+			<div class="sidebar-section" id="sidebar-general">
+				<h3>General Settings</h3>
+				<label for="fund-return">Fund Return (%)</label>
+				<input type="number" id="fund-return" step="1" required>
+				<label for="tax-rate">Tax Rate (%)</label>
+				<input type="number" id="tax-rate" step="1" min="0" max="100" required>
+				<label for="expenses">Expenses (%)</label>
+				<input type="number" id="expenses" step="1" min="0" max="100" required>
+				<label for="profit">Profit (%)</label>
+				<input type="number" id="profit" step="1" min="0" max="100" required>
+				<label for="high-water-profit">High-Water Profit (%)</label>
+				<input type="number" id="high-water-profit" step="1" min="0" max="100" required>
+			</div>
+			<div class="sidebar-section" id="sidebar-strategy">
 				<h3>Credit Strategy</h3>
 				<select id="investment-strategy"></select>
 				<div style="display:flex;gap:6px;margin-top:6px;">
-					<button id="add-strategy" type="button" class="sidebar-btn" style="background:#6bbf7b;padding:4px 10px;font-size:0.95em;">Add</button>
-					<button id="edit-strategy" type="button" class="sidebar-btn" style="background:#7183be;padding:4px 10px;font-size:0.95em;">Edit</button>
-					<button id="delete-strategy" type="button" class="sidebar-btn" style="background:#b97a7a;padding:4px 10px;font-size:0.95em;">Delete</button>
+					<button id="add-strategy" type="button" class="sidebar-btn"
+						style="background:#6bbf7b;padding:4px 10px;font-size:0.95em;">Add</button>
+					<button id="edit-strategy" type="button" class="sidebar-btn"
+						style="background:#7183be;padding:4px 10px;font-size:0.95em;">Edit</button>
+					<button id="delete-strategy" type="button" class="sidebar-btn"
+						style="background:#b97a7a;padding:4px 10px;font-size:0.95em;">Delete</button>
 				</div>
 				<!-- Modal for strategy name input -->
 				<!-- Create Modal: Only Name -->
-				<div id="strategy-modal" style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
-					<div style="background:#232836;padding:32px 24px 24px 24px;border-radius:8px;box-shadow:0 2px 16px #000;width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:stretch;">
+				<div id="strategy-modal"
+					style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
+					<div
+						style="background:#232836;padding:32px 24px 24px 24px;border-radius:8px;box-shadow:0 2px 16px #000;width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:stretch;">
 						<h3 style="color:#fff;margin-top:0;">New Strategy</h3>
 						<label for="modal-strategy-name" style="color:#b0b8d1;">Strategy Name</label>
-						<input type="text" id="modal-strategy-name" style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<input type="text" id="modal-strategy-name"
+							style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<button id="modal-save-strategy" class="sidebar-btn" style="margin-bottom:8px;">Save</button>
-						<button id="modal-cancel-strategy" class="sidebar-btn" style="background:#444a5a;">Cancel</button>
+						<button id="modal-cancel-strategy" class="sidebar-btn"
+							style="background:#444a5a;">Cancel</button>
 					</div>
 				</div>
 				<!-- Edit Modal: All Fields -->
-				<div id="strategy-edit-modal" style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
-					<div style="background:#232836;padding:32px 24px 24px 24px;border-radius:8px;box-shadow:0 2px 16px #000;width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:stretch;">
+				<div id="strategy-edit-modal"
+					style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
+					<div
+						style="background:#232836;padding:32px 24px 24px 24px;border-radius:8px;box-shadow:0 2px 16px #000;width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:stretch;">
 						<h3 style="color:#fff;margin-top:0;">Edit Strategy</h3>
 						<label for="edit-strategy-name" style="color:#b0b8d1;">Strategy Name</label>
-						<input type="text" id="edit-strategy-name" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<input type="text" id="edit-strategy-name"
+							style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<label for="edit-strategy-reserve" style="color:#b0b8d1;">% Reserve Capital to Hold</label>
-						<input type="number" id="edit-strategy-reserve" min="0" max="100" step="1" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;" placeholder="e.g. 10">
+						<input type="number" id="edit-strategy-reserve" min="0" max="100" step="1"
+							style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;"
+							placeholder="e.g. 10">
 						<label for="edit-strategy-reserve-rate" style="color:#b0b8d1;">Reserve Interest Rate (%)</label>
-						<input type="number" id="edit-strategy-reserve-rate" step="1" style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;" placeholder="e.g. 2">
-						<button id="edit-modal-save-strategy" class="sidebar-btn" style="margin-bottom:8px;">Save</button>
-						<button id="edit-modal-cancel-strategy" class="sidebar-btn" style="background:#444a5a;">Cancel</button>
+						<input type="number" id="edit-strategy-reserve-rate" step="1"
+							style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;"
+							placeholder="e.g. 2">
+						<button id="edit-modal-save-strategy" class="sidebar-btn"
+							style="margin-bottom:8px;">Save</button>
+						<button id="edit-modal-cancel-strategy" class="sidebar-btn"
+							style="background:#444a5a;">Cancel</button>
 					</div>
 				</div>
 			</div>
@@ -74,202 +93,229 @@
 				<h3>Scenarios</h3>
 				<select id="scenario-select"></select>
 				<div style="display:flex;gap:6px;margin-top:6px;">
-					<button id="add-scenario" type="button" class="sidebar-btn" style="background:#6bbf7b;padding:4px 10px;font-size:0.95em;">Add</button>
-					<button id="edit-scenario" type="button" class="sidebar-btn" style="background:#7183be;padding:4px 10px;font-size:0.95em;">Edit</button>
-					<button id="delete-scenario" type="button" class="sidebar-btn" style="background:#b97a7a;padding:4px 10px;font-size:0.95em;">Delete</button>
+					<button id="add-scenario" type="button" class="sidebar-btn"
+						style="background:#6bbf7b;padding:4px 10px;font-size:0.95em;">Add</button>
+					<button id="edit-scenario" type="button" class="sidebar-btn"
+						style="background:#7183be;padding:4px 10px;font-size:0.95em;">Edit</button>
+					<button id="delete-scenario" type="button" class="sidebar-btn"
+						style="background:#b97a7a;padding:4px 10px;font-size:0.95em;">Delete</button>
 				</div>
 				<!-- Modal for scenario name input -->
-				<div id="scenario-modal" style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
-					<div style="background:#232836;padding:32px 24px 24px 24px;border-radius:8px;box-shadow:0 2px 16px #000;width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:stretch;">
+				<div id="scenario-modal"
+					style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
+					<div
+						style="background:#232836;padding:32px 24px 24px 24px;border-radius:8px;box-shadow:0 2px 16px #000;width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:stretch;">
 						<h3 style="color:#fff;margin-top:0;">New Scenario</h3>
 						<label for="modal-scenario-balloon" style="color:#b0b8d1;">Balloon Rate (%)</label>
-						<input type="number" id="modal-scenario-balloon" step="1" required style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<input type="number" id="modal-scenario-balloon" step="1" required
+							style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<label for="modal-scenario-interest" style="color:#b0b8d1;">Interest Rate (%)</label>
-						<input type="number" id="modal-scenario-interest" step="1" required style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<input type="number" id="modal-scenario-interest" step="1" required
+							style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<label for="modal-scenario-term" style="color:#b0b8d1;">Term (years)</label>
-						<input type="number" id="modal-scenario-term" required style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<input type="number" id="modal-scenario-term" required
+							style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<label for="modal-scenario-date" style="color:#b0b8d1;">Date</label>
-						<input type="date" id="modal-scenario-date" required style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<input type="date" id="modal-scenario-date" required
+							style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<button id="modal-save-scenario" class="sidebar-btn" style="margin-bottom:8px;">Save</button>
-						<button id="modal-cancel-scenario" class="sidebar-btn" style="background:#444a5a;">Cancel</button>
+						<button id="modal-cancel-scenario" class="sidebar-btn"
+							style="background:#444a5a;">Cancel</button>
 					</div>
 				</div>
 				<!-- Edit Modal: All Fields -->
-				<div id="scenario-edit-modal" style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
-					<div style="background:#232836;padding:32px 24px 24px 24px;border-radius:8px;box-shadow:0 2px 16px #000;width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:stretch;">
+				<div id="scenario-edit-modal"
+					style="display:none;position:fixed;z-index:1000;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
+					<div
+						style="background:#232836;padding:32px 24px 24px 24px;border-radius:8px;box-shadow:0 2px 16px #000;width:340px;max-width:90vw;display:flex;flex-direction:column;align-items:stretch;">
 						<h3 style="color:#fff;margin-top:0;">Edit Scenario</h3>
 						<label for="edit-scenario-balloon" style="color:#b0b8d1;">Balloon Rate (%)</label>
-						<input type="number" id="edit-scenario-balloon" step="1" style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<input type="number" id="edit-scenario-balloon" step="1"
+							style="margin-bottom:16px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<label for="edit-scenario-interest" style="color:#b0b8d1;">Interest Rate (%)</label>
-						<input type="number" id="edit-scenario-interest" step="1" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<input type="number" id="edit-scenario-interest" step="1"
+							style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<label for="edit-scenario-term" style="color:#b0b8d1;">Term (years)</label>
-						<input type="number" id="edit-scenario-term" style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<input type="number" id="edit-scenario-term"
+							style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
 						<label for="edit-scenario-date" style="color:#b0b8d1;">Date</label>
-						<input type="date" id="edit-scenario-date" required style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
-						<button id="edit-modal-save-scenario" class="sidebar-btn" style="margin-bottom:8px;">Save</button>
-						<button id="edit-modal-cancel-scenario" class="sidebar-btn" style="background:#444a5a;">Cancel</button>
+						<input type="date" id="edit-scenario-date" required
+							style="margin-bottom:12px;padding:8px;border-radius:4px;border:1px solid #444a5a;background:#181c24;color:#e0e0e0;">
+						<button id="edit-modal-save-scenario" class="sidebar-btn"
+							style="margin-bottom:8px;">Save</button>
+						<button id="edit-modal-cancel-scenario" class="sidebar-btn"
+							style="background:#444a5a;">Cancel</button>
 					</div>
 				</div>
 			</div>
-        </aside>
-        <main class="main-area">
+		</aside>
+		<main class="main-area">
 			<header>
 				<!-- <h1>Credit Risk Simulator Dashboard</h1> -->
 			</header>
 			<section id="dashboard">
 				<div id="dashboard-simulation-results" class="results"></div>
-				<div class="dashboard-charts-scroll"><div id="dashboard-charts-container"></div></div>
+				<div class="dashboard-charts-scroll">
+					<div id="dashboard-charts-container"></div>
+				</div>
 			</section>
 			<footer>
 				<p>&copy; 2025 Credit Risk Simulator</p>
 			</footer>
 		</main>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script>
-        // Caching logic
-        const cacheKeys = {
-            fund_return: 'creditsimulator_fund_return',
-            tax_rate: 'creditsimulator_tax_rate',
-            expenses: 'creditsimulator_expenses',
-            profit: 'creditsimulator_profit',
-            strategy: 'creditsimulator_investment_strategy',
-            in_profit_only: 'creditsimulator_in_profit_only',
-        };
+	</div>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+	<script>
+		// Caching logic
+		const cacheKeys = {
+			fund_return: 'creditsimulator_fund_return',
+			tax_rate: 'creditsimulator_tax_rate',
+			expenses: 'creditsimulator_expenses',
+			profit: 'creditsimulator_profit',
+			high_water_profit: 'creditsimulator_high_water_profit',
+			strategy: 'creditsimulator_investment_strategy',
+		};
 
-        // Import/Export functionality
-        const exportBtn = document.getElementById('export-data');
-        const importBtn = document.getElementById('import-data');
-        const fileInput = document.getElementById('file-input');
+		// Import/Export functionality
+		const exportBtn = document.getElementById('export-data');
+		const importBtn = document.getElementById('import-data');
+		const fileInput = document.getElementById('file-input');
 
-        // Export all data to JSON file
-        exportBtn.addEventListener('click', function() {
-            const data = {
-                version: '1.0',
-                timestamp: new Date().toISOString(),
-                settings: {
-                    fundReturn: parseFloat(document.getElementById('fund-return').value) || 30,
-                    taxRate: parseFloat(document.getElementById('tax-rate').value) || 0,
-                    expenses: parseFloat(document.getElementById('expenses').value) || 0,
-                    profit: parseFloat(document.getElementById('profit').value) || 0,
-                    inProfitOnly: document.getElementById('in-profit-only').checked,
-                    selectedStrategy: document.getElementById('investment-strategy').value,
-                    selectedScenario: document.getElementById('scenario-select').value
-                },
-                strategies: getStrategies(),
-                scenarios: getScenarios()
-            };
+		// Export all data to JSON file
+		exportBtn.addEventListener('click', function () {
+			const data = {
+				version: '1.0',
+				timestamp: new Date().toISOString(),
+				settings: {
+					fundReturn: parseFloat(document.getElementById('fund-return').value) || 30,
+					taxRate: parseFloat(document.getElementById('tax-rate').value) || 0,
+					expenses: parseFloat(document.getElementById('expenses').value) || 0,
+					profit: parseFloat(document.getElementById('profit').value) || 0,
+					highWaterProfit: parseFloat(document.getElementById('high-water-profit').value) || 0,
+					selectedStrategy: document.getElementById('investment-strategy').value,
+					selectedScenario: document.getElementById('scenario-select').value
+				},
+				strategies: getStrategies(),
+				scenarios: getScenarios()
+			};
 
-            const jsonString = JSON.stringify(data, null, 2);
-            const blob = new Blob([jsonString], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `credit-simulator-export-${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        });
+			const jsonString = JSON.stringify(data, null, 2);
+			const blob = new Blob([jsonString], { type: 'application/json' });
+			const url = URL.createObjectURL(blob);
 
-        // Import data from JSON file
-        importBtn.addEventListener('click', function() {
-            fileInput.click();
-        });
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `credit-simulator-export-${new Date().toISOString().split('T')[0]}.json`;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			URL.revokeObjectURL(url);
+		});
 
-        fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+		// Import data from JSON file
+		importBtn.addEventListener('click', function () {
+			fileInput.click();
+		});
 
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    
-                    // Validate data structure
-                    if (!data.version || !data.settings || !data.strategies || !data.scenarios) {
-                        throw new Error('Invalid file format');
-                    }
+		fileInput.addEventListener('change', function (e) {
+			const file = e.target.files[0];
+			if (!file) return;
 
-                    // Confirm import
-                    if (!confirm(`Import data from ${data.timestamp ? new Date(data.timestamp).toLocaleString() : 'unknown date'}?\n\nThis will replace all current settings, strategies, and scenarios.`)) {
-                        return;
-                    }
+			const reader = new FileReader();
+			reader.onload = function (e) {
+				try {
+					const data = JSON.parse(e.target.result);
 
-                    // Import settings
-                    const settings = data.settings;
-                    document.getElementById('fund-return').value = settings.fundReturn || 30;
-                    document.getElementById('tax-rate').value = settings.taxRate || 0;
-                    document.getElementById('expenses').value = settings.expenses || 0;
-                    document.getElementById('profit').value = settings.profit || 0;
-                    document.getElementById('in-profit-only').checked = settings.inProfitOnly || false;
+					// Validate data structure
+					if (!data.version || !data.settings || !data.strategies || !data.scenarios) {
+						throw new Error('Invalid file format');
+					}
 
-                    // Save settings to localStorage
-                    localStorage.setItem(cacheKeys.fund_return, settings.fundReturn || 30);
-                    localStorage.setItem(cacheKeys.tax_rate, settings.taxRate || 0);
-                    localStorage.setItem(cacheKeys.expenses, settings.expenses || 0);
-                    localStorage.setItem(cacheKeys.profit, settings.profit || 0);
-                    localStorage.setItem(cacheKeys.in_profit_only, settings.inProfitOnly || false);
+					// Confirm import
+					if (!confirm(`Import data from ${data.timestamp ? new Date(data.timestamp).toLocaleString() : 'unknown date'}?\n\nThis will replace all current settings, strategies, and scenarios.`)) {
+						return;
+					}
 
-                    // Import strategies
-                    if (Array.isArray(data.strategies)) {
-                        saveStrategies(data.strategies);
-                        refreshStrategyDropdown(settings.selectedStrategy);
-                        if (settings.selectedStrategy && data.strategies.some(s => s.name === settings.selectedStrategy)) {
-                            document.getElementById('investment-strategy').value = settings.selectedStrategy;
-                            localStorage.setItem(cacheKeys.strategy, settings.selectedStrategy);
-                        }
-                    }
+					// Import settings
+					const settings = data.settings;
+					document.getElementById('fund-return').value = settings.fundReturn || 30;
+					document.getElementById('tax-rate').value = settings.taxRate || 0;
+					document.getElementById('expenses').value = settings.expenses || 0;
+					document.getElementById('profit').value = settings.profit || 0;
 
-                    // Import scenarios
-                    if (Array.isArray(data.scenarios)) {
-                        saveScenarios(data.scenarios);
-                        refreshScenarioDropdown(settings.selectedScenario);
-                        if (settings.selectedScenario && data.scenarios.some(s => s.name === settings.selectedScenario)) {
-                            document.getElementById('scenario-select').value = settings.selectedScenario;
-                        }
-                    }
+					// Handle backward compatibility for old inProfitOnly setting
+					if (settings.highWaterProfit !== undefined) {
+						document.getElementById('high-water-profit').value = settings.highWaterProfit || 0;
+					} else if (settings.inProfitOnly) {
+						// Convert old inProfitOnly=true to move all profit to high-water profit
+						document.getElementById('high-water-profit').value = settings.profit || 0;
+						document.getElementById('profit').value = 0;
+					} else {
+						// Convert old inProfitOnly=false to keep all profit as regular profit
+						document.getElementById('high-water-profit').value = 0;
+					}
 
-                    alert('Data imported successfully!');
-                } catch (error) {
-                    alert('Error importing file: ' + error.message);
-                }
-            };
-            reader.readAsText(file);
-            
-            // Clear the file input
-            e.target.value = '';
-        });
+					// Save settings to localStorage
+					localStorage.setItem(cacheKeys.fund_return, settings.fundReturn || 30);
+					localStorage.setItem(cacheKeys.tax_rate, settings.taxRate || 0);
+					localStorage.setItem(cacheKeys.expenses, settings.expenses || 0);
+					localStorage.setItem(cacheKeys.profit, document.getElementById('profit').value);
+					localStorage.setItem(cacheKeys.high_water_profit, document.getElementById('high-water-profit').value);
 
-        // Restore cached values
-        const fundReturnInput = document.getElementById('fund-return');
-        const taxRateInput = document.getElementById('tax-rate');
-        const expensesInput = document.getElementById('expenses');
-        const profitInput = document.getElementById('profit');
-        const inProfitOnlyCheckbox = document.getElementById('in-profit-only');
-        if (localStorage.getItem(cacheKeys.fund_return)) {
-            fundReturnInput.value = localStorage.getItem(cacheKeys.fund_return);
-        } else {
-            fundReturnInput.value = 30;
-        }
-        if (localStorage.getItem(cacheKeys.tax_rate)) {
-            taxRateInput.value = localStorage.getItem(cacheKeys.tax_rate) || 0;
-        }
-        if (localStorage.getItem(cacheKeys.expenses)) {
-            expensesInput.value = localStorage.getItem(cacheKeys.expenses) || 0;
-        }
-        if (localStorage.getItem(cacheKeys.profit)) {
-            profitInput.value = localStorage.getItem(cacheKeys.profit) || 0;
-        }
-        if (localStorage.getItem(cacheKeys.in_profit_only)) {
-            inProfitOnlyCheckbox.checked = localStorage.getItem(cacheKeys.in_profit_only) === 'true';
-        }
-        // Save in-profit-only checkbox state on change
-        inProfitOnlyCheckbox.addEventListener('change', function() {
-            localStorage.setItem(cacheKeys.in_profit_only, inProfitOnlyCheckbox.checked);
-        });
-        // --- STRATEGY MANAGEMENT ---
+					// Import strategies
+					if (Array.isArray(data.strategies)) {
+						saveStrategies(data.strategies);
+						refreshStrategyDropdown(settings.selectedStrategy);
+						if (settings.selectedStrategy && data.strategies.some(s => s.name === settings.selectedStrategy)) {
+							document.getElementById('investment-strategy').value = settings.selectedStrategy;
+							localStorage.setItem(cacheKeys.strategy, settings.selectedStrategy);
+						}
+					}
+
+					// Import scenarios
+					if (Array.isArray(data.scenarios)) {
+						saveScenarios(data.scenarios);
+						refreshScenarioDropdown(settings.selectedScenario);
+						if (settings.selectedScenario && data.scenarios.some(s => s.name === settings.selectedScenario)) {
+							document.getElementById('scenario-select').value = settings.selectedScenario;
+						}
+					}
+
+					alert('Data imported successfully!');
+				} catch (error) {
+					alert('Error importing file: ' + error.message);
+				}
+			};
+			reader.readAsText(file);
+
+			// Clear the file input
+			e.target.value = '';
+		});
+
+		// Restore cached values
+		const fundReturnInput = document.getElementById('fund-return');
+		const taxRateInput = document.getElementById('tax-rate');
+		const expensesInput = document.getElementById('expenses');
+		const profitInput = document.getElementById('profit');
+		const highWaterProfitInput = document.getElementById('high-water-profit');
+		if (localStorage.getItem(cacheKeys.fund_return)) {
+			fundReturnInput.value = localStorage.getItem(cacheKeys.fund_return);
+		} else {
+			fundReturnInput.value = 30;
+		}
+		if (localStorage.getItem(cacheKeys.tax_rate)) {
+			taxRateInput.value = localStorage.getItem(cacheKeys.tax_rate) || 0;
+		}
+		if (localStorage.getItem(cacheKeys.expenses)) {
+			expensesInput.value = localStorage.getItem(cacheKeys.expenses) || 0;
+		}
+		if (localStorage.getItem(cacheKeys.profit)) {
+			profitInput.value = localStorage.getItem(cacheKeys.profit) || 0;
+		}
+		if (localStorage.getItem(cacheKeys.high_water_profit)) {
+			highWaterProfitInput.value = localStorage.getItem(cacheKeys.high_water_profit) || 0;
+		}
+		// --- STRATEGY MANAGEMENT ---
 		const STRATEGY_KEY = 'creditsimulator_strategies';
 		const strategySelect = document.getElementById('investment-strategy');
 		const addBtn = document.getElementById('add-strategy');
@@ -294,7 +340,7 @@
 		function getStrategies() {
 			const raw = localStorage.getItem(STRATEGY_KEY);
 			if (!raw) return [
-				{name:'Raw', reserve:0, reserveRate:0},
+				{ name: 'Raw', reserve: 0, reserveRate: 0 },
 			];
 			try { return JSON.parse(raw); } catch { return []; }
 		}
@@ -304,7 +350,7 @@
 		function refreshStrategyDropdown(selectedName) {
 			const strats = getStrategies();
 			strategySelect.innerHTML = strats.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
-			if (selectedName && strats.some(s=>s.name===selectedName)) {
+			if (selectedName && strats.some(s => s.name === selectedName)) {
 				strategySelect.value = selectedName;
 			}
 		}
@@ -314,33 +360,34 @@
 		if (localStorage.getItem(cacheKeys.strategy)) {
 			strategySelect.value = localStorage.getItem(cacheKeys.strategy);
 		}
-		   // Save on change
-		   const cacheInput = (id, key) => {
-			   const el = document.getElementById(id);
-			   if (el) {
-				   el.addEventListener('input', e => {
-					   localStorage.setItem(key, e.target.value);
-				   });
-			   }
-		   };
-		   cacheInput('fund-return', cacheKeys.fund_return);
-		   cacheInput('tax-rate', cacheKeys.tax_rate);
-		   cacheInput('expenses', cacheKeys.expenses);
-		   cacheInput('profit', cacheKeys.profit);
+		// Save on change
+		const cacheInput = (id, key) => {
+			const el = document.getElementById(id);
+			if (el) {
+				el.addEventListener('input', e => {
+					localStorage.setItem(key, e.target.value);
+				});
+			}
+		};
+		cacheInput('fund-return', cacheKeys.fund_return);
+		cacheInput('tax-rate', cacheKeys.tax_rate);
+		cacheInput('expenses', cacheKeys.expenses);
+		cacheInput('profit', cacheKeys.profit);
+		cacheInput('high-water-profit', cacheKeys.high_water_profit);
 		strategySelect.addEventListener('change', e => {
 			localStorage.setItem(cacheKeys.strategy, e.target.value);
 		});
 
 		// Add strategy popup logic
-		addBtn.addEventListener('click', function() {
+		addBtn.addEventListener('click', function () {
 			modal.style.display = 'flex';
 			modalNameInput.value = '';
-			setTimeout(()=>modalNameInput.focus(), 100);
+			setTimeout(() => modalNameInput.focus(), 100);
 		});
-		modalCancel.addEventListener('click', function() {
+		modalCancel.addEventListener('click', function () {
 			modal.style.display = 'none';
 		});
-		modalSave.addEventListener('click', function() {
+		modalSave.addEventListener('click', function () {
 			const name = modalNameInput.value.trim();
 			if (!name) return;
 			let strats = getStrategies();
@@ -349,21 +396,21 @@
 				return;
 			}
 			// Default values for new strategies
-			strats.push({name, growth: 5, reserve: 0, reserveRate: 0});
+			strats.push({ name, growth: 5, reserve: 0, reserveRate: 0 });
 			saveStrategies(strats);
 			refreshStrategyDropdown(name);
 			strategySelect.value = name;
 			localStorage.setItem(cacheKeys.strategy, name);
 			modal.style.display = 'none';
 		});
-		modalNameInput.addEventListener('keydown', function(e) {
+		modalNameInput.addEventListener('keydown', function (e) {
 			if (e.key === 'Enter') {
 				modalSave.click();
 			}
 		});
 
 		// Edit strategy logic
-		editBtn.addEventListener('click', function() {
+		editBtn.addEventListener('click', function () {
 			const strats = getStrategies();
 			const selected = strategySelect.value;
 			const strat = strats.find(s => s.name === selected);
@@ -373,14 +420,14 @@
 				editModalReserve.value = strat.reserve ?? 0;
 				editModalReserveRate.value = strat.reserveRate ?? 0;
 				editModal.style.display = 'flex';
-				setTimeout(()=>editModalName.focus(), 100);
+				setTimeout(() => editModalName.focus(), 100);
 			}
 		});
-		editModalCancel.addEventListener('click', function() {
+		editModalCancel.addEventListener('click', function () {
 			editModal.style.display = 'none';
 			editingStrategy = null;
 		});
-		editModalSave.addEventListener('click', function() {
+		editModalSave.addEventListener('click', function () {
 			const name = editModalName.value.trim();
 			const reserve = parseFloat(editModalReserve.value);
 			const reserveRate = parseFloat(editModalReserveRate.value);
@@ -391,7 +438,7 @@
 				alert('A strategy with this name already exists.');
 				return;
 			}
-			strats = strats.map(s => s.name === editingStrategy ? {...s, name, reserve, reserveRate} : s);
+			strats = strats.map(s => s.name === editingStrategy ? { ...s, name, reserve, reserveRate } : s);
 			saveStrategies(strats);
 			refreshStrategyDropdown(name);
 			strategySelect.value = name;
@@ -400,14 +447,14 @@
 			editingStrategy = null;
 		});
 		[editModalName, editModalReserve, editModalReserveRate].forEach(input => {
-			input.addEventListener('keydown', function(e) {
+			input.addEventListener('keydown', function (e) {
 				if (e.key === 'Enter') {
 					editModalSave.click();
 				}
 			});
 		});
 		// Delete selected strategy
-		deleteBtn.addEventListener('click', function() {
+		deleteBtn.addEventListener('click', function () {
 			let strats = getStrategies();
 			const selected = strategySelect.value;
 			if (!confirm('Delete strategy "' + selected + '"?')) return;
@@ -450,23 +497,23 @@
 		function refreshScenarioDropdown(selectedName) {
 			const scenarios = getScenarios();
 			scenarioSelect.innerHTML = scenarios.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
-			if (selectedName && scenarios.some(s=>s.name===selectedName)) {
+			if (selectedName && scenarios.some(s => s.name === selectedName)) {
 				scenarioSelect.value = selectedName;
 			}
 		}
 		// Initial load
 		refreshScenarioDropdown();
 		// Add scenario
-		addScenarioBtn.addEventListener('click', function() {
+		addScenarioBtn.addEventListener('click', function () {
 			scenarioModal.style.display = 'flex';
 			document.getElementById('modal-scenario-date').value = '';
 			scenarioModalBalloon.value = '';
-			setTimeout(()=>scenarioModalInterest.focus(), 100);
+			setTimeout(() => scenarioModalInterest.focus(), 100);
 		});
-		scenarioModalCancel.addEventListener('click', function() {
+		scenarioModalCancel.addEventListener('click', function () {
 			scenarioModal.style.display = 'none';
 		});
-		scenarioModalSave.addEventListener('click', function() {
+		scenarioModalSave.addEventListener('click', function () {
 			const interest = parseFloat(document.getElementById('modal-scenario-interest').value);
 			const term = parseInt(document.getElementById('modal-scenario-term').value);
 			const date = document.getElementById('modal-scenario-date').value;
@@ -475,11 +522,11 @@
 				alert('Please enter interest, term, date, and balloon rate.');
 				return;
 			}
-			
+
 			// Generate base name
 			const baseName = `${interest + balloon}% ${term}yr ${new Date(date + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC' })}`;
 			let scenarios = getScenarios();
-			
+
 			// Find a unique name by adding a counter if needed
 			let name = baseName;
 			let counter = 1;
@@ -487,16 +534,16 @@
 				name = `${baseName} (${counter})`;
 				counter++;
 			}
-			
+
 			// Default values for new scenario
-			scenarios.push({name, interest, term, date, balloon});
+			scenarios.push({ name, interest, term, date, balloon });
 			saveScenarios(scenarios);
 			refreshScenarioDropdown(name);
 			scenarioSelect.value = name;
 			scenarioModal.style.display = 'none';
 		});
 		// Edit scenario
-		editScenarioBtn.addEventListener('click', function() {
+		editScenarioBtn.addEventListener('click', function () {
 			const scenarios = getScenarios();
 			const selected = scenarioSelect.value;
 			const scenario = scenarios.find(s => s.name === selected);
@@ -507,14 +554,14 @@
 				document.getElementById('edit-scenario-date').value = scenario.date || '';
 				editScenarioBalloon.value = scenario.balloon ?? '';
 				editScenarioModal.style.display = 'flex';
-				setTimeout(()=>editScenarioInterest.focus(), 100);
+				setTimeout(() => editScenarioInterest.focus(), 100);
 			}
 		});
-		editScenarioModalCancel.addEventListener('click', function() {
+		editScenarioModalCancel.addEventListener('click', function () {
 			editScenarioModal.style.display = 'none';
 			editingScenario = null;
 		});
-		editScenarioModalSave.addEventListener('click', function() {
+		editScenarioModalSave.addEventListener('click', function () {
 			const interest = parseFloat(editScenarioInterest.value);
 			const term = parseInt(editScenarioTerm.value);
 			const date = document.getElementById('edit-scenario-date').value;
@@ -523,11 +570,11 @@
 				alert('Please enter interest, term, date, and balloon rate.');
 				return;
 			}
-			
+
 			// Generate base name
 			const baseName = `${interest + balloon}% ${term}yr ${new Date(date + 'T00:00:00Z').toLocaleDateString('en-US', { timeZone: 'UTC' })}`;
 			let scenarios = getScenarios();
-			
+
 			// Find a unique name by adding a counter if needed (excluding the scenario being edited)
 			let name = baseName;
 			let counter = 1;
@@ -535,8 +582,8 @@
 				name = `${baseName} (${counter})`;
 				counter++;
 			}
-			
-			scenarios = scenarios.map(s => s.name === editingScenario ? {...s, name, interest, term, date, balloon} : s);
+
+			scenarios = scenarios.map(s => s.name === editingScenario ? { ...s, name, interest, term, date, balloon } : s);
 			saveScenarios(scenarios);
 			refreshScenarioDropdown(name);
 			scenarioSelect.value = name;
@@ -544,7 +591,7 @@
 			editingScenario = null;
 		});
 		[editScenarioInterest, editScenarioTerm].forEach(input => {
-			input.addEventListener('keydown', function(e) {
+			input.addEventListener('keydown', function (e) {
 				if (e.key === 'Enter') {
 					editScenarioModalSave.click();
 				}
@@ -552,7 +599,7 @@
 		});
 
 		// Delete selected scenario
-		deleteScenarioBtn.addEventListener('click', function() {
+		deleteScenarioBtn.addEventListener('click', function () {
 			let scenarios = getScenarios();
 			const selected = scenarioSelect.value;
 			if (!selected) return;
@@ -567,7 +614,7 @@
 			}
 		});
 
-		document.getElementById('run-simulation').addEventListener('click', async function(e) {
+		document.getElementById('run-simulation').addEventListener('click', async function (e) {
 			e.preventDefault();
 			const strategyName = strategySelect.value;
 			const strategies = getStrategies();
@@ -582,8 +629,8 @@
 				try {
 					const response = await fetch('pricehistory/SPY.json');
 					const spyData = await response.json();
-					return spyData.map(c => ({ 
-						...c, 
+					return spyData.map(c => ({
+						...c,
 						date: c.date || new Date(c.datetime * 1000).toLocaleDateString('en-CA', {
 							timeZone: 'America/New_York'
 						})
@@ -611,7 +658,7 @@
 			const taxRate = parseFloat(document.getElementById('tax-rate').value) / 100;
 			const expensesRate = parseFloat(document.getElementById('expenses').value) / 100;
 			const profitRate = parseFloat(document.getElementById('profit').value) / 100;
-			const totalCutRate = taxRate + expensesRate + profitRate;
+			const highWaterProfitRate = parseFloat(document.getElementById('high-water-profit').value) / 100;
 
 			// Load SPY data once
 			const spCandles = await loadSPYData();
@@ -700,13 +747,13 @@
 
 				for (let i = 0; i < compoundInterestDataOffset.length; i++) {
 					const spValue = spNormalizedOffset[i];
-					
+
 					// If end-of-year, calculate interest on current loan value and update loan value
 					if (i > 0 && i % 252 === 0) {
 						// Interest paid in cash is based on current loan value (balloon amount from prior year)
 						const interestPaid = currentLoanValue * interestRate;
 						paidInterestOffset += interestPaid;
-						
+
 						// Update current loan value to match the balloon compound interest at this point
 						// This represents the new principal for next year's interest calculation
 						currentLoanValue = compoundInterestDataOffset[i];
@@ -777,38 +824,47 @@
 					compoundInterestDataOffset.map((_, i) => spCandlesOffset[i]?.date)
 				);
 
-				// Calculate Net Performance: expenses/profit may be conditional
-				const compoundWithExpProfit = generateCompoundInterestData(amount, expensesRate + profitRate, term).slice(0, paidInterestData.length);
-				const inProfitOnly = inProfitOnlyCheckbox.checked;
-				const profits = [];
+				// Calculate Net Performance with dual profit approach
+				const compoundWithExpenses = generateCompoundInterestData(amount, expensesRate, term).slice(0, paidInterestData.length);
+				const compoundWithRegularProfit = generateCompoundInterestData(amount, profitRate, term).slice(0, paidInterestData.length);
+
+				const regularProfits = [];
+				const highWaterProfits = [];
+				const totalProfits = [];
 				const netPerformance = [];
 
-				let lastNormalizedProfit = amount;
-				let profitCutIndex = 0;
+				// Calculate daily rates for high-water profit
+				const dailyHighWaterProfitRate = Math.pow(1 + highWaterProfitRate, 1 / 252) - 1;
+				let cumulativeHighWaterProfit = 0;
 
 				for (let i = 0; i < paidInterestData.length; i++) {
-					let afterCut = 0;
-					let profit = 0;
+					// Regular profit: always compounds (taken regardless of performance vs cutline)
+					const regularProfit = compoundWithRegularProfit[i] - amount;
 
-					if (!inProfitOnly) {
-						// Expenses/profit always compound
-						profit = compoundWithExpProfit[i] - amount;
-						afterCut = afterTaxCurve[i] - profit;
-					} else {
-						// Only subtract expenses/profit as a percentage of gain above water (after tax)
-						profit = compoundWithExpProfit[profitCutIndex] - amount;
-						afterCut = afterTaxCurve[i] - profit;
+					// Calculate what the net would be with only regular expenses and profit so far
+					const expenses = compoundWithExpenses[i] - amount;
+					const provisionalNet = afterTaxCurve[i] - expenses - regularProfit - cumulativeHighWaterProfit;
+					const currentBalloonValue = compoundInterestDataOffset[i];
 
-						if (lastNormalizedProfit > compoundInterestData[i])
-							profitCutIndex++;
+					// High-water profit: only accumulate when provisional net is above balloon
+					if (provisionalNet > currentBalloonValue && highWaterProfitRate > 0) {
+						// Add daily high-water profit increment
+						const baseForHighWaterProfit = amount + cumulativeHighWaterProfit;
+						const dailyHighWaterProfitIncrement = baseForHighWaterProfit * dailyHighWaterProfitRate;
+						cumulativeHighWaterProfit += dailyHighWaterProfitIncrement;
 					}
 
-					lastNormalizedProfit = afterCut;
-					profits.push(profit);
-					netPerformance.push(afterCut);
-				}
+					// Total expenses and profits
+					const totalProfit = regularProfit + cumulativeHighWaterProfit;
+					const totalCut = expenses + totalProfit;
 
-				// Results summary for each scenario (now using Net Performance)
+					const afterCut = afterTaxCurve[i] - totalCut;
+
+					regularProfits.push(regularProfit);
+					highWaterProfits.push(cumulativeHighWaterProfit);
+					totalProfits.push(totalProfit);
+					netPerformance.push(afterCut);
+				}				// Results summary for each scenario (now using Net Performance)
 				const finalCompound = compoundInterestDataOffset[compoundInterestDataOffset.length - 1];
 				const finalNet = netPerformance[compoundInterestDataOffset.length - 1];
 				const outperformancePercent = ((finalNet - finalCompound) / finalCompound * 100).toFixed(2);
@@ -917,9 +973,16 @@
 								pointRadius: 0
 							},
 							{
-								label: 'Profit',
-								data: profits.slice(0, compoundInterestDataOffset.length),
+								label: 'Regular Profit',
+								data: regularProfits.slice(0, compoundInterestDataOffset.length),
 								borderColor: 'rgba(255, 193, 7, 1)',
+								fill: false,
+								pointRadius: 0
+							},
+							{
+								label: 'High-Water Profit',
+								data: highWaterProfits.slice(0, compoundInterestDataOffset.length),
+								borderColor: 'rgba(255, 140, 0, 1)',
 								fill: false,
 								pointRadius: 0
 							}
@@ -964,4 +1027,5 @@
 		});
 	</script>
 </body>
+
 </html>
